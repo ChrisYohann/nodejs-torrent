@@ -16,7 +16,7 @@ TorrentMessage.prototype.send = function(){
   buffer.writeInt32BE(this.lengthPrefix, 0)
   buffer.write(this.messageID, 4)
   if(this.payload != null){
-    buffer.write(this.payload, 5)
+    buffer = Buffer.concat([buffer, this.payload])
   }
   return buffer
 }
