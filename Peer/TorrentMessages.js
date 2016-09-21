@@ -11,8 +11,7 @@ var TorrentMessage = module.exports = function TorrentMessage(){
 }
 
 TorrentMessage.prototype.send = function(){
-  payloadLength = (this.paylod == null ) ? 0 : payloadLength
-  var buffer = Buffer.alloc(5+payloadLength)
+  var buffer = Buffer.alloc(5)
   buffer.writeInt32BE(this.lengthPrefix, 0)
   buffer.write(this.messageID, 4)
   if(this.payload != null){
