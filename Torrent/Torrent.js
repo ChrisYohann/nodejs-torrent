@@ -1,13 +1,17 @@
-var torrent = module.exports = function Torrent(metaFile, filepath){
+var TorrentDisk = require("../Disk/TorrentDisk")
+
+var Torrent = module.exports = function Torrent(metaFile, filepath){
   this.name = metaFile["info"]["name"]
   this._size = metaFile["info"]["size"]
   this._metaData = metaFile
   this._listeningPort = 0
-  this._uploaded = 0
-  this._downloaded = 0
   this._left = this._size
   this._tracker = metaFile["announce"]
   this._trackerList = metaFile["announce-list"]
+  this._torrentDisk = new TorrentDisk(metaFile, filepath)
+  this._uploaded = this["_torrentDisk"]["uploaded"]
+  this._downloaded = this["_torrentDisk"]["downloaded"]
+  this._completed = this["_torrentDisk"]["completed"]
 }
 
 Torrent.prototype.getSize = function(){

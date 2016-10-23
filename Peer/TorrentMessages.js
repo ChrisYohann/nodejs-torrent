@@ -13,11 +13,16 @@ var TorrentMessage = module.exports = function TorrentMessage(){
 TorrentMessage.prototype.send = function(){
   var buffer = Buffer.alloc(5)
   buffer.writeInt32BE(this.lengthPrefix, 0)
-  buffer.write(this.messageID, 4)
-  if(this.payload != null){
+  if(this.messageID != null)
+    buffer[4] = this.messageID
+  if(this.payload != null)
     buffer = Buffer.concat([buffer, this.payload])
-  }
   return buffer
+}
+
+var KeepAlive = module.exports.KeepAlive = function KeepAlive(){
+  TorrentMessage.apply(this)
+  util.inherits(KeepAlive, TorrentMessage)
 }
 
 var Choke = module.exports.Choke = function Choke(){

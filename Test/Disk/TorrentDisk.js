@@ -10,6 +10,7 @@ var fs = require("fs")
 var os = require('os');
 var Decode = require("../../Bencode/Decode")
 var TorrentDisk = require("../../Disk/TorrentDisk")
+var path = require("path")
 
 //Test Modules
 var chai = require('chai');
@@ -55,7 +56,7 @@ describe("### TORRENT DISK TESTS ###", function(){
       describe("Retrieve path of all the files in the torrent in Multiple Files Mode ", function(){
         it("It should retrieve the relative path for all the files in the Torrent", function(){
           torrentDiskMultipleFiles.retrieveFileNamesAndLengths();
-          expect(torrentDiskMultipleFiles.fileNamesPath).to.deep.equal([testMultipleFiles+"/File1.bin", testMultipleFiles+"/File2.bin"])
+          expect(torrentDiskMultipleFiles.fileNamesPath).to.deep.equal([testMultipleFiles+path.sep+"File1.bin", testMultipleFiles+path.sep+"File2.bin"])
         })
       })
     })
@@ -86,7 +87,7 @@ describe("### TORRENT DISK TESTS ###", function(){
             var result = { name : filename, fileOffset : offsetFile, pieceOffset : offsetPiece}
             actualResult.push(result)
           })
-          expect(actualResult).to.eql([{name : testMultipleFiles+"/File1.bin", fileOffset : 10, pieceOffset : 0}, {name : testMultipleFiles+"/File2.bin", fileOffset : 0, pieceOffset : 1}])
+          expect(actualResult).to.eql([{name : testMultipleFiles+path.sep+"File1.bin", fileOffset : 10, pieceOffset : 0}, {name : testMultipleFiles+path.sep+"File2.bin", fileOffset : 0, pieceOffset : 1}])
       })
     })
   })

@@ -7,8 +7,8 @@ const PATH_ENV = require("path")
 const singleFile = "SINGLE_FILE_MODE"
 const multipleFiles = "MULTIPLE_FILE_MODE"
 
-var TorrentDisk = module.exports = function TorrentDisk(torrentObject, filepath){
-  this.torrent = torrentObject
+var TorrentDisk = module.exports = function TorrentDisk(metaFile, filepath){
+  this.metaFile = metaFile
   this.filepath = filepath
   this.pieces = []
   this.fileLengths = []
@@ -17,8 +17,9 @@ var TorrentDisk = module.exports = function TorrentDisk(torrentObject, filepath)
   this.nbPieces = 0
   this.lastPieceLength = 0
   this.downloaded = 0
-  this.uploaded = 0
-  this.mode = ("files" in torrentObject["info"]) ? multipleFiles : singleFile
+  this.completed = 0
+  this.uploaded = 0 
+  this.mode = ("files" in metaFile["info"]) ? multipleFiles : singleFile
   this.totalSize = computeTotalSize.call(this)
 }
 
@@ -29,7 +30,7 @@ TorrentDisk.prototype.retrieveFileNamesAndLengths = function(){
       this.fileLengths.push(this.totalSize)
       break ;
     case multipleFiles :
-      this["torrent"]["info"]["files"].forEach(function(fileDict){
+      this["metaFile"]["info"]["files"].forEach(function(fileDict){
         var fileNamePath = this.filepath + PATH_ENV.sep + fileDict["path"].join(PATH_ENV.sep)
         this.fileNamesPath.push(fileNamePath)
         this.fileLengths.push(fileDict["length"])
@@ -39,7 +40,7 @@ TorrentDisk.prototype.retrieveFileNamesAndLengths = function(){
 }
 
 TorrentDisk.prototype.initPieces = function(){
-  var bencodeDict = this.torrent
+  var bencodeDict = this.metaFile
   var infoBencodeDict = bencodeDict["info"]
   var piecesJoined = infoBencodeDict["pieces"]
   var pieceLength = infoBencodeDict["piece length"]
@@ -109,7 +110,7 @@ TorrentDisk.prototype.verify = function(){
    completedPieces.forEach(function(pieceCompletedLength){
     completed+= pieceCompletedLength
   })
-   self.downloaded = completed
+   self.completed = completed
    return completed
  })
 }
@@ -145,6 +146,7 @@ TorrentDisk.prototype.write = function(index, begin, block){
   if(!piece.isCompleted()){
     return piece.write(begin, block).then(function(bytesWritten){
       self.downloaded += bytesWritten
+      self.completed += bytesWritten
       return bytesWritten
     })
   }
@@ -166,7 +168,7 @@ var initFiles = function(){
 }
 
 var computeTotalSize = function(){
-  var infoDict = this["torrent"]["info"]
+  var infoDict = this["metaFile"]["info"]
   var mode = this.mode
   if(mode == singleFile){
     return infoDict["length"]
