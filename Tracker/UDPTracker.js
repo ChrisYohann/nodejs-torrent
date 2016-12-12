@@ -6,6 +6,7 @@ var compact2string = require("compact2string");
 var Tracker = require("./Tracker")
 var util = require('util')
 var Decode = require("../Bencode/Decode")
+var url = require("url")
 
 var DEFAULT_CONNECTION_ID = 0x41727101980
 var CONNECT_ACTION = 0
@@ -20,24 +21,24 @@ var UDPTracker = module.exports = function UDPTracker(clientTorrent, announceURL
   this.transactionID = crypto.randomBytes(4)
   this.connectionID = undefined
 
-  var trackerAddressAndPort = udpAddressRegex.exec(this.announceURL)
-  this.trackerAddress = trackerAddressAndPort[1]
-  this.trackerPort = trackerAddressAndPort[2]
+  var urlObject = url.parse(announceURL)
+  this.trackerAddress = urlObject.hostname
+  this.trackerPort = urlObject.port
   console.log(`Tracker Infos : ${this.trackerAddress}:${this.trackerPort}`)
 
   var server = dgram.createSocket("udp4")
   var self = this
-  server.on('listening', function () {
-    var address = server.address();
-    console.log('UDP Server listening on ' + address.address + ":" + address.port);
-    });
 
-  server.on('message', callbackTrackerResponseUDP)
+  server.on('message', function(message, remote){
+    callbackTrackerResponseUDP.call(self, message, remote)
+  })
+
   server.on('listening', () => {
     var address = server.address();
-  console.log(`Server listening ${address.address}:${address.port}`);
-  self.makeUDPConnectRequest()
+    console.log(`Server listening ${address.address}:${address.port}`);
+    self.makeUDPConnectRequest();
   });
+
   this.server = server
   server.bind()
 }
@@ -49,9 +50,10 @@ UDPTracker.prototype.makeUDPConnectRequest = function(){
   connectMessage.writeIntBE(DEFAULT_CONNECTION_ID, 0, 8)
   connectMessage.writeInt32BE(CONNECT_ACTION, 8)
   connectMessage = Buffer.concat([connectMessage, this.transactionID])
+  console.log(connectMessage)
   if(this.trackerAddress && this.trackerPort){
-    this.server.send(connectMessage, 0, 16, this.trackerPort, this.trackerAddress, function(){
-      console.log("Message sent to the tracker.")
+    this.server.send(connectMessage, 0, 16, this.trackerPort, "127.0.0.1", function(error){
+      console.log(error)
     })
   } else {
     console.log("Unable to parse Tracker IP and Address")
@@ -75,11 +77,12 @@ UDPTracker.prototype.makeUDPAnnounceRequest = function(torrentEvent){
 96      16-bit integer  port
 98*/
     var requestMessage = Buffer.alloc(98)
+    console.log("Connection ID : "+this.connectionID)
     requestMessage.writeIntBE(this.connectionID, 0, 8)
     requestMessage.writeInt32BE(ANNOUNCE_ACTION, 8)
     requestMessage.writeInt32BE(this.transactionID.readInt32BE(0), 12)
 
-    var info_hash = Utils.createInfoHash(this.clientTorrent.metaFile["info"])
+    var info_hash = Utils.createInfoHash(this.client["_metaData"]["info"])
     requestMessage.write(Utils.encodeBuffer(info_hash), 16, 20)
 
     requestMessage.write("CLI Torrent Client", 36, 20)
@@ -93,8 +96,8 @@ UDPTracker.prototype.makeUDPAnnounceRequest = function(torrentEvent){
     requestMessage.writeInt16BE(6971, 96)
 
     if(this.trackerAddress && this.trackerPort){
-      this.server.send(requestMessage, 0, 98, this.trackerPort, this.trackerAddress, function(){
-        console.log("Message sent to the tracker.")
+      this.server.send(requestMessage, 0, 98, this.trackerPort, "127.0.0.1", function(error){
+        console.log(error)
       })
     } else {
       console.log("Unable to parse Tracker IP and Address")
@@ -154,6 +157,7 @@ var callbackTrackerResponseUDP = function(message, remote){
   }
 
   var action = message.readInt32BE(0)
+  console.log("Action : "+action)
   switch(action){
     case CONNECT_ACTION :
       this.onConnectResponse(message) ;
