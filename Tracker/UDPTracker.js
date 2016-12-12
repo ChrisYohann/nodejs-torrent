@@ -22,7 +22,7 @@ var UDPTracker = module.exports = function UDPTracker(clientTorrent, announceURL
   this.connectionID = undefined
 
   var urlObject = url.parse(announceURL)
-  this.trackerAddress = urlObject.hostname
+  this.trackerAddress = (urlObject.hostname == "0.0.0.0" ? "127.0.0.1" : urlObject.hostname)
   this.trackerPort = urlObject.port
   console.log(`Tracker Infos : ${this.trackerAddress}:${this.trackerPort}`)
 
@@ -52,7 +52,8 @@ UDPTracker.prototype.makeUDPConnectRequest = function(){
   connectMessage = Buffer.concat([connectMessage, this.transactionID])
   console.log(connectMessage)
   if(this.trackerAddress && this.trackerPort){
-    this.server.send(connectMessage, 0, 16, this.trackerPort, "127.0.0.1", function(error){
+    this.server.send(connectMessage, 0, 16, this.trackerPort, this.trackerAddress, function(error){
+      if(error)
       console.log(error)
     })
   } else {
@@ -77,7 +78,7 @@ UDPTracker.prototype.makeUDPAnnounceRequest = function(torrentEvent){
 96      16-bit integer  port
 98*/
     var requestMessage = Buffer.alloc(98)
-    console.log("Connection ID : "+this.connectionID)
+    //console.log("Connection ID : "+this.connectionID)
     requestMessage.writeIntBE(this.connectionID, 0, 8)
     requestMessage.writeInt32BE(ANNOUNCE_ACTION, 8)
     requestMessage.writeInt32BE(this.transactionID.readInt32BE(0), 12)
@@ -93,10 +94,13 @@ UDPTracker.prototype.makeUDPAnnounceRequest = function(torrentEvent){
     requestMessage.writeUInt32BE(0, 84)
     requestMessage.writeInt32BE(123456, 88)
     requestMessage.writeInt32BE(-1, 92)
-    requestMessage.writeInt16BE(6971, 96)
+    requestMessage.writeInt16BE(6970, 96)
+
+    //console.log(requestMessage)
 
     if(this.trackerAddress && this.trackerPort){
-      this.server.send(requestMessage, 0, 98, this.trackerPort, "127.0.0.1", function(error){
+      this.server.send(requestMessage, 0, 98, this.trackerPort, this.trackerAddress, function(error){
+        if(error)
         console.log(error)
       })
     } else {
@@ -114,8 +118,8 @@ UDPTracker.prototype.onConnectResponse = function(message){
     throw "Error : TransactionID does not match the one sent by the client"
   }
 
- this.connectionID = message.readIntBE(0, 8)
- console.log("Connection ID : "+this.connectionID)
+ this.connectionID = message.readIntBE(8, 8)
+ //console.log("Connection ID : "+this.connectionID)
  this.makeUDPAnnounceRequest();
 }
 
@@ -142,7 +146,7 @@ UDPTracker.prototype.onAnnounceResponse = function(message){
   this.intervalInSeconds = message.readInt32BE(8)
   var leechers = message.readInt32BE(12)
   var seeders = message.readInt32BE(16)
-  //console.log("Seeders : ${seeders} Leechers : ${leechers}")
+  console.log(`Seeders : ${seeders} Leechers : ${leechers}`)
 
   var peersPart = message.slice(20)
   var peerList = compact2string.multi(peersPart)
@@ -151,6 +155,7 @@ UDPTracker.prototype.onAnnounceResponse = function(message){
 
 var callbackTrackerResponseUDP = function(message, remote){
   console.log("Message received from : "+remote.address + ':' + remote.port)
+  //console.log(message)
   if(message.length < 4){
     console.log("Tracker Response is less than 4 bytes. Aborting.")
     return ;
@@ -168,7 +173,7 @@ var callbackTrackerResponseUDP = function(message, remote){
     case SCRAPE_ACTION :
       break ;
     case ERROR_ACTION :
-      console.log("ERROR : ${message}")
+      console.log(`ERROR : ${message}`)
       break ;
     default :
       break ;
