@@ -91,6 +91,7 @@ Piece.prototype.read = function(begin, length){
   var filePointerIndex = getFilePointerIndex.call(this, begin)
 
   do {
+    //console.log(filePointer)
     var filePointer = this["files"][filePointerIndex]
     var file = filePointer.getFile()
     var fileLength = file.opened ? file.length : filePointer.getFileLength()
@@ -185,7 +186,7 @@ Piece.prototype.isCompleted = function(){
 Piece.prototype.checkSha1 = function(){
   var sha1Print = this.sha1
   return this.read(0, this.length).then(function(data){
-    console.log("Data : "+data.toString("hex"))
+    //console.log("Data : "+data.toString("hex"))
     var sha1_hash = crypto.createHash("sha1")
     sha1_hash.update(data)
     var digest = sha1_hash.digest()

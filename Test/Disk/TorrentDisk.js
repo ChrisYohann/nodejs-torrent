@@ -98,7 +98,7 @@ describe("### TORRENT DISK TESTS ###", function(){
 
     describe("Test verify on a 100% completed File", function(){
       it("The function should return the length of the file", function(){
-        torrentDiskSingleFile.initPieces()
+        //torrentDiskSingleFile.initPieces()
         return torrentDiskSingleFile.verify().should.eventually.equal(10)
       })
     })
@@ -110,7 +110,8 @@ describe("### TORRENT DISK TESTS ###", function(){
 
     describe("Test verify function on a 100% completed Files", function(){
       it("The function should return the sum of both files lengths", function(){
-        torrentDiskMultipleFiles.initPieces()
+        //torrentDiskMultipleFiles.initPieces()
+        console.log(`Total Size : ${torrentDiskMultipleFiles.totalSize} ; Piece Length : ${torrentDiskMultipleFiles["metaFile"]["info"]["piece length"]}`)
         return torrentDiskMultipleFiles.verify().should.eventually.equal(22)
       })
     })
@@ -123,7 +124,7 @@ describe("### TORRENT DISK TESTS ###", function(){
 
     describe("Test BitField function on a 100% completed File", function(){
       it("All the index for 10 pieces should be set to 1", function(){
-        torrentDiskSingleFile.initPieces()
+        //torrentDiskSingleFile.initPieces()
         var expectedResult = Buffer.from([0xff, 0xc0])
         return torrentDiskSingleFile.getBitfieldFromFile().should.eventually.deep.equal(expectedResult)
       })
@@ -136,16 +137,10 @@ describe("### TORRENT DISK TESTS ###", function(){
 
     describe("Test BitField function on a 100% completed File", function(){
       it("All the index for 11 pieces should be set to 1", function(){
-        torrentDiskMultipleFiles.initPieces()
+        //torrentDiskMultipleFiles.initPieces()
         var expectedResult = Buffer.from([0xff, 0xe0])
         return torrentDiskMultipleFiles.getBitfieldFromFile().should.eventually.deep.equal(expectedResult)
       })
     })
   })
-
-
-
-
-
-
 })

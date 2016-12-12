@@ -7,6 +7,7 @@
     "chai-as-promised": "^5.3.0",
     "combined-stream": "^1.0.5",
     "combined-stream2": "^1.1.2",
+    "compact2string": "^1.4.0",
     "concat-files": "^0.1.0",
     "fs-promise": "^0.5.0",
     "grunt": "^0.4.5",

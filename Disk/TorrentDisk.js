@@ -18,9 +18,10 @@ var TorrentDisk = module.exports = function TorrentDisk(metaFile, filepath){
   this.lastPieceLength = 0
   this.downloaded = 0
   this.completed = 0
-  this.uploaded = 0 
+  this.uploaded = 0
   this.mode = ("files" in metaFile["info"]) ? multipleFiles : singleFile
   this.totalSize = computeTotalSize.call(this)
+  this.initPieces()
 }
 
 TorrentDisk.prototype.retrieveFileNamesAndLengths = function(){
@@ -109,6 +110,7 @@ TorrentDisk.prototype.verify = function(){
  return Promise.all(promises).then(function(completedPieces){
    completedPieces.forEach(function(pieceCompletedLength){
     completed+= pieceCompletedLength
+    console.log("Completed : "+completed)
   })
    self.completed = completed
    return completed
