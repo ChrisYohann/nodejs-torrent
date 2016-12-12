@@ -1,19 +1,22 @@
 var TorrentDisk = require("../Disk/TorrentDisk")
 var Tracker = require("../Tracker/Tracker")
+var Decode = require("../Bencode/Decode")
 
 var Torrent = module.exports = function Torrent(metaFile, filepath){
+  if(typeof metaFile === "string"){
+ 	var metaFile = new Decode(metaFile) 
+}
   this.name = metaFile["info"]["name"]
   this._size = metaFile["info"]["length"]
   this._metaData = metaFile
   this._listeningPort = 6970
-  this._left = this._size
   this._torrentDisk = new TorrentDisk(metaFile, filepath)
-  this._primaryTracker = metaFile["announce"]
+  this._mainTracker = metaFile["announce"]
   this._trackerList = metaFile["announce-list"]
   this._uploaded = this["_torrentDisk"]["uploaded"]
   this._downloaded = this["_torrentDisk"]["downloaded"]
   this._completed = this["_torrentDisk"]["completed"]
-  this._torrentTracker = new Tracker(this)
+  this._left = this["_size"]- this["_completed"]
 }
 
 Torrent.prototype.initTrackers = function(){
