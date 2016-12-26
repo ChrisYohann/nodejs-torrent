@@ -2,8 +2,8 @@
  * Created by chris on 16/03/16.
  */
 
-var Dict = require("./BencodeDict")
-var fs = require("fs")
+var Dict = require("./BencodeDict");
+var fs = require("fs");
 var crypto = require('crypto');
 var hash = crypto.createHash('sha1');
 
@@ -16,9 +16,9 @@ var hash = crypto.createHash('sha1');
  */
 
 function Encode(data,encoding,output){
-    Encode.position = 0
-    Encode.data = data
-    Encode.encoding = encoding || "utf8"
+    Encode.position = 0;
+    Encode.data = data;
+    Encode.encoding = encoding || "utf8";
 
     if(typeof output == 'string'){
       Encode.wstream = fs.createWriteStream(output, {
@@ -31,17 +31,21 @@ function Encode(data,encoding,output){
       Encode.wstream = output
     }
 
-    Encode.encode_dictionary(Encode.data)
-    Encode.wstream.end(function (){ console.log(Encode.wstream.bytesWritten+" bytes written at "+Encode.wstream.path);})
+    Encode.encode_dictionary(Encode.data);
+    Encode.wstream.end(function (){
+      if(path != undefined){
+        console.log(Encode.wstream.bytesWritten+" bytes written at "+Encode.wstream.path);
+      }
+    })
 }
 
 Encode.encode_dictionary = function(data){
-  Encode.wstream.write("d")
-  var keySet = data.getContent()
-  keySet.sort()
+  Encode.wstream.write("d");
+  var keySet = data.getContent();
+  keySet.sort();
   keySet.forEach(function(element,index,array){
     //console.log(element+" "+typeof data[element])
-    Encode.encode_string(element)
+    Encode.encode_string(element);
     if(Buffer.isBuffer(data[element]) || typeof data[element] === 'string' ){
       Encode.encode_string(data[element])
 
@@ -58,10 +62,10 @@ Encode.encode_dictionary = function(data){
   });
   Encode.wstream.write("e")
 
-}
+};
 
 Encode.encode_list = function(data){
-  Encode.wstream.write("l")
+  Encode.wstream.write("l");
   data.forEach(function(element,index,array){
     if (Array.isArray(element)){
         Encode.encode_list(element)
@@ -74,14 +78,14 @@ Encode.encode_list = function(data){
     }
   });
   Encode.wstream.write("e")
-}
+};
 
 Encode.encode_string = function(data){
-  Encode.wstream.write(data.length.toString())
-  Encode.wstream.write(":")
+  Encode.wstream.write(data.length.toString());
+  Encode.wstream.write(":");
   Encode.wstream.write(data)
-}
+};
 
 
 
-module.exports = Encode
+module.exports = Encode;
