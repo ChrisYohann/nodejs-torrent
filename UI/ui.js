@@ -11,6 +11,7 @@ const ESCAPE_MODE = "escape" ;
 const CREATE_MODE = "create" ;
 
 let mode = ESCAPE_MODE ;
+let PROCESS_STDIN_EVENT_LOCKED = true
 let cursorPosition = 0 ;
 
 
@@ -62,6 +63,7 @@ let drawInterface = function(){
     }
 
     outputBuffer.output();
+    process.stdout.write(clc.move.to(0, 2));
 }
 
 let clearFocus = function(){
@@ -128,8 +130,6 @@ let createNewTorrentWizard = function(){
     inquirer.prompt(questions).then(function(answers){
         console.log(answers);
         drawInterface();
-        //keypress(process.stdin);
-        //process.stdin.on('keypress', keypressListenerCallBack);
         process.stdin.setRawMode(true)
         process.stdin.resume()
     });
@@ -139,7 +139,7 @@ let createNewTorrentWizard = function(){
 drawInterface();
 
 // Move to First Line Position
-process.stdout.write(clc.move.to(0, 2));
+//
 
 let keypressListenerCallBack = function(ch, key){
     if(key){
@@ -179,9 +179,22 @@ let keypressListenerCallBack = function(ch, key){
             case 'n' :
                 if(key.ctrl){
                     process.stdout.write(clc.reset);
-                    //process.stdin.removeAllListeners("keypress");
-                    //process.stdin.removeAllListeners("data");
+                    let dataEventListener = process.stdin.listeners('data')
+                    let keyPressEventListener = process.stdin.listeners('keypress')
+                    if (dataEventListener.length > 0 && PROCESS_STDIN_EVENT_LOCKED){
+                        console.log("Removing data listener");
+                        process.stdin.removeAllListeners('data');
+                        PROCESS_STDIN_EVENT_LOCKED = false
+                    }
+
+                    if(keyPressEventListener.length > 1){
+                        let firstKeyPressEventListener = keyPressEventListener[0]
+                        console.log("Removing keypress listener");
+                        process.stdin.removeAllListeners('keypress')
+                        process.stdin.on('keypress', firstKeyPressEventListener)
+                    }
                     createNewTorrentWizard();
+
 
                 }
                 break ;
@@ -192,6 +205,17 @@ let keypressListenerCallBack = function(ch, key){
 } ;
 
 keypress(process.stdin);
+
+/*process.stdin.on('newListener', function(event, fn){
+    console.log(`New Listener ${event} ; Count : ${process.stdin.listeners(event).length}`)
+    console.log(fn)
+})
+
+process.stdin.on('removeListener', function(event, fn){
+    console.log(`Remove Listener ${event} ; Count : ${process.stdin.listeners(event).length} `)
+    console.log(fn)
+})*/
+
 
 process.stdin.on('keypress', keypressListenerCallBack);
 process.stdin.setRawMode(true);
