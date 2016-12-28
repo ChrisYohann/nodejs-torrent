@@ -33,7 +33,7 @@ function Encode(data,encoding,output){
 
     Encode.encode_dictionary(Encode.data);
     Encode.wstream.end(function (){
-      if(path != undefined){
+      if(output != "undefined"){
         console.log(Encode.wstream.bytesWritten+" bytes written at "+Encode.wstream.path);
       }
     })

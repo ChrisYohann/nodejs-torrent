@@ -139,7 +139,7 @@ Decode.decode_integer = function(){
 
 Decode.numberisInteger = function(str){
    var number = parseInt(str,10);
-   return isNaN(number)
+   return !isNaN(number)
 };
 
 

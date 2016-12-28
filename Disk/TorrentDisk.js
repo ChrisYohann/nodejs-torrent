@@ -2,12 +2,16 @@ var randomAccessFile = require('random-access-file');
 var Promise = require('rsvp').Promise;
 var Piece = require("./Piece");
 var SeekPointer = require("./SeekPointer");
+var util = require('util');
+var EventEmitter = require('events').EventEmitter;
+
 const PATH_ENV = require("path");
 
 const singleFile = "SINGLE_FILE_MODE";
 const multipleFiles = "MULTIPLE_FILE_MODE";
 
 var TorrentDisk = module.exports = function TorrentDisk(metaFile, filepath){
+  EventEmitter.call(this)
   this.metaFile = metaFile;
   this.filepath = filepath;
   this.pieces = [];
@@ -21,8 +25,11 @@ var TorrentDisk = module.exports = function TorrentDisk(metaFile, filepath){
   this.uploaded = 0;
   this.mode = ("files" in metaFile["info"]) ? multipleFiles : singleFile;
   this.totalSize = computeTotalSize.call(this);
-  this.initPieces()
+  this.initPieces();
+  this.verify();
 };
+
+util.inherits(TorrentDisk, EventEmitter)
 
 TorrentDisk.prototype.retrieveFileNamesAndLengths = function(){
   switch(this.mode){
@@ -61,6 +68,9 @@ TorrentDisk.prototype.initPieces = function(){
   for(var i = 0 ; i < this.nbPieces ; i++){
     var pieceFingerPrint = piecesJoined.slice(20*i, 20*(i+1));
     var lengthPiece = (i != this.nbPieces-1 ) ? pieceLength : lastPieceLength;
+    if(i == this.nbPieces -1){
+      console.log(pieceFingerPrint);
+    }
     var piece = new Piece(pieceFingerPrint, lengthPiece);
     var bytesPieceRemaining = lengthPiece;
 
@@ -84,6 +94,8 @@ TorrentDisk.prototype.initPieces = function(){
     }
     this.pieces.push(piece)
   }
+  //setTimeout(this.verify, 5000)
+
 };
 
 TorrentDisk.prototype.clear = function(){
@@ -95,24 +107,30 @@ TorrentDisk.prototype.clear = function(){
 };
 
 TorrentDisk.prototype.verify = function(){
+  console.log("Verifying Torrent")
  var self = this;
  var completed = 0;
  var promises = [];
- this.pieces.forEach(function(piece){
+ this.pieces.forEach(function(piece, index){
    var promise = piece.checkSha1().then(function(isCompleted){
      if(isCompleted){
-       return piece.getLength()
+       return piece.getLength();
+     } else {
+       console.log("Not completed", index);
      }
      return 0 ;
+   }).catch(function(error){
+     console.log(error)
    });
    promises.push(promise)
  });
  return Promise.all(promises).then(function(completedPieces){
    completedPieces.forEach(function(pieceCompletedLength){
     completed+= pieceCompletedLength;
-    console.log("Completed : "+completed)
+    //console.log("Completed : "+completed)
   });
    self.completed = completed;
+   self.emit('verified', completed);
    return completed
  })
 };

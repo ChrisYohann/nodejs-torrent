@@ -29,8 +29,9 @@ const testMultipleFiles = "./Test/Disk/TestFiles/TestMultipleFiles";
 describe("### TORRENT DISK TESTS ###", function(){
   describe("*** Init Torrent Disk***", function(){
     var parsedTorrentSingleFile = new Decode(testSingleFile+".torrent");
-    var torrentDiskSingleFile = new TorrentDisk(parsedTorrentSingleFile, testSingleFile+".bin");
     var parsedTorrentMultipleFiles = new Decode(testMultipleFiles+".torrent");
+    console.log(parsedTorrentSingleFile.toString());
+    var torrentDiskSingleFile = new TorrentDisk(parsedTorrentSingleFile, testSingleFile+".bin");
     var torrentDiskMultipleFiles = new TorrentDisk(parsedTorrentMultipleFiles, testMultipleFiles);
 
     beforeEach(function(){

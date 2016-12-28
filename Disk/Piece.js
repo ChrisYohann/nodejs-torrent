@@ -5,6 +5,7 @@ var crypto = require('crypto');
 var Piece = module.exports = function Piece(sha1FingerPrint, pieceLength){
   this.sha1 = sha1FingerPrint;
   this.length = pieceLength || 0;
+  console.log(this.length);
   this.files = [];
   this.blocks = []
 };

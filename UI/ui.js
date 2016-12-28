@@ -1,8 +1,12 @@
-const fs = require('fs')
-const CLI = require('clui'),
-    clc = require('cli-color'),
-    keypress = require('keypress') ;
-    inquirer = require('inquirer')
+const fs = require('fs');
+const CLI = require('clui');
+const clc = require('cli-color');
+const keypress = require('keypress') ;
+let inquirer = require('inquirer') ;
+let CreateTorrent = require('../newTorrent');
+let Torrent = require('../Torrent/Torrent');
+let TorrentLine = require('./torrentLine')
+let Encode = require('../Bencode/Encode.js');
 
 const NB_COLUMNS = process.stdout.columns || 80 ;
 
@@ -13,11 +17,13 @@ const CREATE_MODE = "create" ;
 let mode = ESCAPE_MODE ;
 let PROCESS_STDIN_EVENT_LOCKED = true
 let cursorPosition = 0 ;
+let lastTorrentPosition = 2 ;
 
+let torrents = [];
 
-let Line          = CLI.Line,
-    LineBuffer    = CLI.LineBuffer,
-    Progress = CLI.Progress;
+let Line = CLI.Line;
+let LineBuffer = CLI.LineBuffer;
+let Progress = CLI.Progress;
 
 let outputBuffer = new LineBuffer({
     x: 0,
@@ -27,9 +33,10 @@ let outputBuffer = new LineBuffer({
 });
 
 let drawInterface = function(){
-    process.stdout.write(clc.reset);
-    outputBuffer.lines = []
+    //process.stdout.write(clc.reset);
+    outputBuffer.lines = [];
 
+    //noinspection JSUnusedLocalSymbols
     let header = new Line(outputBuffer)
         .padding(4)
         .column('Name', Math.ceil(0.25*NB_COLUMNS))
@@ -44,15 +51,24 @@ let drawInterface = function(){
         headerSeparator += "-" ;
     }
 
+    //noinspection JSUnusedLocalSymbols
     let headerMargin = new Line(outputBuffer)
         .column(headerSeparator, Math.ceil(0.95*NB_COLUMNS))
         .fill()
         .store();
 
-    let torrentProgressBar = new Progress(Math.ceil(0.15*NB_COLUMNS))
+    torrents.forEach(function(torrent, index){
+        let torrentLine = new TorrentLine(torrent);
+        outputBuffer.addLine(torrentLine);
+        lastTorrentPosition+=1
+    });
+
+
+    /*let torrentProgressBar = new Progress(Math.ceil(0.15*NB_COLUMNS))
         .update(10, 40)
 
     for(let i = 0; i < 10; i++){
+        //noinspection JSUnusedLocalSymbols
         let Torrent1Line = new Line(outputBuffer)
             .padding(4)
             .column(`Torrent_${i}`, Math.ceil(0.25*NB_COLUMNS))
@@ -60,10 +76,18 @@ let drawInterface = function(){
             .column('Speed', Math.ceil(0.25*NB_COLUMNS))
             .fill()
             .store();
-    }
+    }*/
 
     outputBuffer.output();
     process.stdout.write(clc.move.to(0, 2));
+}
+
+let addTorrentLine = function(torrentLine){
+
+}
+
+let removeTorrentLine = function(torrentIndex){
+
 }
 
 let clearFocus = function(){
@@ -117,33 +141,47 @@ let createNewTorrentWizard = function(){
             message: 'Filepath',
             validate: function(value){
                 try {
+                    //noinspection JSUnusedLocalSymbols
                     let stats = fs.statSync(value);
                     return true ;
                 }
                 catch(err) {
-                    return true ;
-                    //return "Please enter a valid Filepath" ;
+                    return "Please enter a valid Filepath" ;
                 }
             }
         }
     ] ;
     inquirer.prompt(questions).then(function(answers){
-        console.log(answers);
-        drawInterface();
-        process.stdin.setRawMode(true)
-        process.stdin.resume()
+        CreateTorrent(answers, function(torrentDict){
+            inquirer.prompt([{name : 'savepath',
+                type: 'input',
+                'message' : "Where do you want to save the file ?",
+                validate : function(value){
+                    if(value){
+                        return true ;
+                    } else {
+                        return "Please Enter a valid SavePath"
+                    }
+                }
+            }]).then(function(savePath){
+                Encode(torrentDict, "UTF-8", savePath["savepath"]);
+                let torrent = new Torrent(torrentDict, answers["filepath"]);
+                torrents.push(torrent);
+                //console.log(torrents);
+                torrent.on('verified', function(completed){
+                    drawInterface();
+                    process.stdin.setRawMode(true);
+                    process.stdin.resume();
+                });
+            });
+        })
     });
 
-}
-
-drawInterface();
-
-// Move to First Line Position
-//
+};
 
 let keypressListenerCallBack = function(ch, key){
     if(key){
-        //console.log(`got key : ${key}`) ;
+        //console.log('got "keypress"', key);
         switch(key.name){
             case 'up' :
                 if(mode == ESCAPE_MODE){
@@ -179,8 +217,8 @@ let keypressListenerCallBack = function(ch, key){
             case 'n' :
                 if(key.ctrl){
                     process.stdout.write(clc.reset);
-                    let dataEventListener = process.stdin.listeners('data')
-                    let keyPressEventListener = process.stdin.listeners('keypress')
+                    let dataEventListener = process.stdin.listeners('data');
+                    let keyPressEventListener = process.stdin.listeners('keypress');
                     if (dataEventListener.length > 0 && PROCESS_STDIN_EVENT_LOCKED){
                         console.log("Removing data listener");
                         process.stdin.removeAllListeners('data');
@@ -188,14 +226,12 @@ let keypressListenerCallBack = function(ch, key){
                     }
 
                     if(keyPressEventListener.length > 1){
-                        let firstKeyPressEventListener = keyPressEventListener[0]
+                        let firstKeyPressEventListener = keyPressEventListener[0];
                         console.log("Removing keypress listener");
-                        process.stdin.removeAllListeners('keypress')
-                        process.stdin.on('keypress', firstKeyPressEventListener)
+                        process.stdin.removeAllListeners('keypress');
+                        process.stdin.on('keypress', firstKeyPressEventListener);
                     }
                     createNewTorrentWizard();
-
-
                 }
                 break ;
         }
@@ -204,19 +240,8 @@ let keypressListenerCallBack = function(ch, key){
 
 } ;
 
+drawInterface();
 keypress(process.stdin);
-
-/*process.stdin.on('newListener', function(event, fn){
-    console.log(`New Listener ${event} ; Count : ${process.stdin.listeners(event).length}`)
-    console.log(fn)
-})
-
-process.stdin.on('removeListener', function(event, fn){
-    console.log(`Remove Listener ${event} ; Count : ${process.stdin.listeners(event).length} `)
-    console.log(fn)
-})*/
-
-
 process.stdin.on('keypress', keypressListenerCallBack);
 process.stdin.setRawMode(true);
 process.stdin.resume();
