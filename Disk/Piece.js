@@ -5,7 +5,6 @@ var crypto = require('crypto');
 var Piece = module.exports = function Piece(sha1FingerPrint, pieceLength){
   this.sha1 = sha1FingerPrint;
   this.length = pieceLength || 0;
-  console.log(this.length);
   this.files = [];
   this.blocks = []
 };
@@ -34,10 +33,10 @@ Piece.prototype.write = function(begin, block){
     var bytesAvailableInCurrentFile = file.length - filePointer.getFileOffset() - newBegin;
     var bytesRemaining = bytesToWrite - bytesAvailableInCurrentFile;
     //console.log("Bytes Remaining : "+ bytesRemaining)
-    console.log("Available : "+bytesAvailableInCurrentFile);
+    //console.log("Available : "+bytesAvailableInCurrentFile);
     var isOverlap = bytesRemaining > 0;
     if(isOverlap)
-      console.log("Piece may overlapping 2 files. Bytes remaining to write : "+bytesRemaining);
+      //console.log("Piece may overlapping 2 files. Bytes remaining to write : "+bytesRemaining);
 
     var p = new Promise(function(resolve, reject){
       (function(){
@@ -104,7 +103,7 @@ Piece.prototype.read = function(begin, length){
     //console.log("Bytes Remaining : "+ bytesRemaining)
     var isOverlap = bytesRemaining > 0;
     if(isOverlap)
-      console.log("Piece may overlapping 2 files. Bytes remaining to read : "+bytesRemaining);
+      //console.log("Piece may overlapping 2 files. Bytes remaining to read : "+bytesRemaining);
 
     var p = new Promise(function(resolve, reject){
       file.read(filePointer.getFileOffset() + newBegin,

@@ -9,7 +9,6 @@ let Progress = CLI.Progress;
 let TorrentLine = module.exports = function TorrentLine(torrentObject){
     let torrentSize = torrentObject['_size'];
     let completed = torrentObject['_completed'];
-    console.log(torrentSize, completed);
     let result = new Line()
         .padding(4)
         .column(torrentObject["name"], Math.ceil(0.25*NB_COLUMNS))

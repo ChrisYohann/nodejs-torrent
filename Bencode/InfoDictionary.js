@@ -129,11 +129,12 @@ var createInfoDictMultipleFiles = function(infoDictInstance, pieceSize){
   combinedStream.on('end', function(){
     //Create the Hash of the last Piece
     if(bufferPosition > 0){
+      var lastPieceBuffer = bufferSHA1.slice(0, bufferPosition)
       var sha1_hash = crypto.createHash("sha1");
-      sha1_hash.update(bufferSHA1);
+      sha1_hash.update(lastPieceBuffer);
       var digest = sha1_hash.digest();
       pieces_hash.push(digest);
-      bufferPosition = 0
+      bufferPosition = 0;
     }
 
     console.log("Nb Pieces : "+pieces_hash.length);
@@ -142,6 +143,10 @@ var createInfoDictMultipleFiles = function(infoDictInstance, pieceSize){
     infoDictionary.putContent("pieces", pieces);
     infoDictionary.putContent("name", PATH_ENV.basename(path_directory));
     infoDictionary.putContent("files", filesDictList);
+    files = [];
+    filesSize = [];
+    totalSize = 0;
+    pieces = [];
     infoDictInstance.emit("info_end", infoDictionary)
   })
 };
@@ -176,7 +181,11 @@ var createInfoDictSingleFile = function(infoDictInstance){
     infoDictionary.putContent("pieces", Buffer.concat(pieces_hash));
     console.log(infoDictionary.toString());
     console.log(pieces_hash.join("").length);
-    infoDictInstance.emit("info_end", infoDictionary)
+    infoDictInstance.emit("info_end", infoDictionary);
+    files = [];
+    filesSize = [];
+    totalSize = 0;
+    pieces = [];
   })
 
 };

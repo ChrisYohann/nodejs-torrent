@@ -33,7 +33,7 @@ let outputBuffer = new LineBuffer({
 });
 
 let drawInterface = function(){
-    //process.stdout.write(clc.reset);
+    process.stdout.write(clc.reset);
     outputBuffer.lines = [];
 
     //noinspection JSUnusedLocalSymbols

@@ -68,9 +68,6 @@ TorrentDisk.prototype.initPieces = function(){
   for(var i = 0 ; i < this.nbPieces ; i++){
     var pieceFingerPrint = piecesJoined.slice(20*i, 20*(i+1));
     var lengthPiece = (i != this.nbPieces-1 ) ? pieceLength : lastPieceLength;
-    if(i == this.nbPieces -1){
-      console.log(pieceFingerPrint);
-    }
     var piece = new Piece(pieceFingerPrint, lengthPiece);
     var bytesPieceRemaining = lengthPiece;
 
@@ -107,7 +104,6 @@ TorrentDisk.prototype.clear = function(){
 };
 
 TorrentDisk.prototype.verify = function(){
-  console.log("Verifying Torrent")
  var self = this;
  var completed = 0;
  var promises = [];
