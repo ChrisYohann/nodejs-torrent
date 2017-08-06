@@ -6,6 +6,7 @@ var Dict = require("./BencodeDict");
 var fs = require("fs");
 var crypto = require('crypto');
 var hash = crypto.createHash('sha1');
+let logger = require("../log")
 
 /**
  *
@@ -34,7 +35,7 @@ function Encode(data,encoding,output){
     Encode.encode_dictionary(Encode.data);
     Encode.wstream.end(function (){
       if(output != "undefined"){
-        console.log(Encode.wstream.bytesWritten+" bytes written at "+Encode.wstream.path);
+        logger.info(Encode.wstream.bytesWritten+" bytes written at "+Encode.wstream.path);
       }
     })
 }

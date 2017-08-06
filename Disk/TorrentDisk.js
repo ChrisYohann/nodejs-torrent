@@ -4,6 +4,7 @@ var Piece = require("./Piece");
 var SeekPointer = require("./SeekPointer");
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
+let logger = require("../log")
 
 const PATH_ENV = require("path");
 
@@ -112,18 +113,17 @@ TorrentDisk.prototype.verify = function(){
      if(isCompleted){
        return piece.getLength();
      } else {
-       console.log("Not completed", index);
+       logger.verbose(`Not completed ${index}`);
      }
      return 0 ;
    }).catch(function(error){
-     console.log(error)
+     logger.error(error)
    });
    promises.push(promise)
  });
  return Promise.all(promises).then(function(completedPieces){
    completedPieces.forEach(function(pieceCompletedLength){
     completed+= pieceCompletedLength;
-    //console.log("Completed : "+completed)
   });
    self.completed = completed;
    self.emit('verified', completed);

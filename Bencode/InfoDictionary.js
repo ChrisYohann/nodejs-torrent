@@ -1,3 +1,4 @@
+let logger = require("../log")
 var fs = require('fs');
 const PATH_ENV = require('path');
 var walk = require('walk');
@@ -74,10 +75,10 @@ var listFilesInDirectory = function(infoDictInstance){
 
   walker.on('end', function(){
     files.forEach(function(element,index,array){
-      console.log("File : "+element+" Size : "+sizeFormatter(filesSize[index]))
+      logger.verbose("File : "+element+" Size : "+sizeFormatter(filesSize[index]))
     }) ;
     var pieceSize = getPieceSize(totalSize);
-    console.log("Total Size : "+ sizeFormatter(totalSize)+ " Piece Size : "+pieceSize);
+    logger.verbose("Total Size : "+ sizeFormatter(totalSize)+ " Piece Size : "+pieceSize);
     createInfoDictMultipleFiles(infoDictInstance, pieceSize) ;
   });
 };
@@ -104,9 +105,9 @@ var createInfoDictMultipleFiles = function(infoDictInstance, pieceSize){
   });
 
   combinedStream.on('data', function(chunk) {
-    /*console.log("BufferSHA1 Length : "+bufferSHA1.length)
-    console.log("Available Bytes : "+ availableBytesInTheBuffer)
-    console.log("Bytes Read :"+ chunk.length)*/
+    logger.debug("BufferSHA1 Length : "+bufferSHA1.length)
+    logger.debug("Available Bytes : "+ availableBytesInTheBuffer)
+    logger.debug("Bytes Read :"+ chunk.length)
     var availableBytesInTheBuffer = bufferSHA1.length - bufferPosition;
     chunk.copy(bufferSHA1, bufferPosition, 0, Math.min(chunk.length, availableBytesInTheBuffer));
     bufferPosition += Math.min(chunk.length, availableBytesInTheBuffer);
@@ -137,7 +138,7 @@ var createInfoDictMultipleFiles = function(infoDictInstance, pieceSize){
       bufferPosition = 0;
     }
 
-    console.log("Nb Pieces : "+pieces_hash.length);
+    logger.verbose("Nb Pieces : "+pieces_hash.length);
     pieces = Buffer.concat(pieces_hash) ;
     infoDictionary.putContent("piece length", pieceSize);
     infoDictionary.putContent("pieces", pieces);
@@ -157,10 +158,10 @@ var createInfoDictSingleFile = function(infoDictInstance){
   var filepath = infoDictInstance.path;
   var stats = fs.statSync(filepath);
   var fileSizeInBytes = stats["size"];
-  console.log("File size "+fileSizeInBytes+" bytes");
+  logger.verbose("File size "+fileSizeInBytes+" bytes");
 
   var pieceSize = getPieceSize(fileSizeInBytes);
-  console.log("Piece size : "+pieceSize/1024+" kB");
+  logger.verbose("Piece size : "+pieceSize/1024+" kB");
 
   var pieces_hash = [];
   var file_as_stream = fs.createReadStream(filepath,{ highWaterMark : pieceSize});
@@ -173,14 +174,14 @@ var createInfoDictSingleFile = function(infoDictInstance){
   });
 
   file_as_stream.on("end", function(){
-    console.log("The File has been hashed.");
+    logger.verbose("The File has been hashed.");
     var infoDictionary = new BencodeDict();
     infoDictionary.putContent("name", PATH_ENV.basename(filepath));
     infoDictionary.putContent("length", fileSizeInBytes);
     infoDictionary.putContent("piece length", pieceSize);
     infoDictionary.putContent("pieces", Buffer.concat(pieces_hash));
-    console.log(infoDictionary.toString());
-    console.log(pieces_hash.join("").length);
+    logger.verbose(infoDictionary.toString());
+    logger.verbose(pieces_hash.join("").length);
     infoDictInstance.emit("info_end", infoDictionary);
     files = [];
     filesSize = [];

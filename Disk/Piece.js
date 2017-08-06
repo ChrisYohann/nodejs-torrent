@@ -1,6 +1,7 @@
 var Promise = require('rsvp').Promise;
 var EventEmitter = require('events').EventEmitter;
 var crypto = require('crypto');
+let logger = require("../log")
 
 var Piece = module.exports = function Piece(sha1FingerPrint, pieceLength){
   this.sha1 = sha1FingerPrint;
@@ -28,26 +29,26 @@ Piece.prototype.write = function(begin, block){
     var file = filePointer.getFile();
     var bytesToWrite = blockRemaining.length;
 
-    //console.log("Bytes to write : "+bytesToWrite)
+    logger.debug("Bytes to write : "+bytesToWrite)
 
     var bytesAvailableInCurrentFile = file.length - filePointer.getFileOffset() - newBegin;
     var bytesRemaining = bytesToWrite - bytesAvailableInCurrentFile;
-    //console.log("Bytes Remaining : "+ bytesRemaining)
-    //console.log("Available : "+bytesAvailableInCurrentFile);
+    logger.debug("Bytes Remaining : "+ bytesRemaining)
+    logger.debug("Available : "+bytesAvailableInCurrentFile);
     var isOverlap = bytesRemaining > 0;
     if(isOverlap)
-      //console.log("Piece may overlapping 2 files. Bytes remaining to write : "+bytesRemaining);
+      logger.debug("Piece may overlapping 2 files. Bytes remaining to write : "+bytesRemaining);
 
     var p = new Promise(function(resolve, reject){
       (function(){
-        //console.log("Bytes to Write : "+ bytesToWrite +" Bytes available :"+ bytesAvailableInCurrentFile)
+        logger.debug("Bytes to Write : "+ bytesToWrite +" Bytes available :"+ bytesAvailableInCurrentFile)
         var bytesWritten = Math.min(bytesToWrite, bytesAvailableInCurrentFile);
         file.write(filePointer.getFileOffset() + newBegin,
                    blockRemaining.slice(0, bytesWritten),
                    function (err){
                      if(err){
-                       console.log(err);
-                       reject(err)
+                       logger.error(err);
+                       reject(err);
                      } else {
                         piece.insertBlock(begin, block.length);
                         piece.mergeBlocks();
@@ -75,7 +76,7 @@ Piece.prototype.write = function(begin, block){
       return a + b ;
     }, 0);
   }).catch(function(error){
-    console.log(error)
+    logger.error(error)
   })
 
 };
@@ -90,20 +91,20 @@ Piece.prototype.read = function(begin, length){
   var filePointerIndex = getFilePointerIndex.call(this, begin);
 
   do {
-    //console.log(filePointer)
+    logger.debug(filePointer)
     var filePointer = this["files"][filePointerIndex];
     var file = filePointer.getFile();
     var fileLength = file.opened ? file.length : filePointer.getFileLength();
 
-    //console.log("File length : "+file.length)
-    //console.log("Bytes to read : "+newLength)
+    logger.debug("File length : "+file.length)
+    logger.debug("Bytes to read : "+newLength)
 
     var bytesAvailableInCurrentFile = fileLength - filePointer.getFileOffset() - newBegin;
     var bytesRemaining = newLength - bytesAvailableInCurrentFile;
-    //console.log("Bytes Remaining : "+ bytesRemaining)
+    logger.debug("Bytes Remaining : "+ bytesRemaining)
     var isOverlap = bytesRemaining > 0;
     if(isOverlap)
-      //console.log("Piece may overlapping 2 files. Bytes remaining to read : "+bytesRemaining);
+      logger.debug("Piece may overlapping 2 files. Bytes remaining to read : "+bytesRemaining);
 
     var p = new Promise(function(resolve, reject){
       file.read(filePointer.getFileOffset() + newBegin,
@@ -185,7 +186,7 @@ Piece.prototype.isCompleted = function(){
 Piece.prototype.checkSha1 = function(){
   var sha1Print = this.sha1;
   return this.read(0, this.length).then(function(data){
-    //console.log("Data : "+data.toString("hex"))
+    logger.debug("Data : "+data.toString("hex"))
     var sha1_hash = crypto.createHash("sha1");
     sha1_hash.update(data);
     var digest = sha1_hash.digest();

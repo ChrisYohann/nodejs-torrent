@@ -63,23 +63,12 @@ let drawInterface = function(){
         lastTorrentPosition+=1
     });
 
-
-    /*let torrentProgressBar = new Progress(Math.ceil(0.15*NB_COLUMNS))
-        .update(10, 40)
-
-    for(let i = 0; i < 10; i++){
-        //noinspection JSUnusedLocalSymbols
-        let Torrent1Line = new Line(outputBuffer)
-            .padding(4)
-            .column(`Torrent_${i}`, Math.ceil(0.25*NB_COLUMNS))
-            .column(torrentProgressBar, Math.ceil(0.25*NB_COLUMNS))
-            .column('Speed', Math.ceil(0.25*NB_COLUMNS))
-            .fill()
-            .store();
-    }*/
-
     outputBuffer.output();
     process.stdout.write(clc.move.to(0, 2));
+    keypress(process.stdin);
+    process.stdin.on('keypress', keypressListenerCallBack);
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
 }
 
 let addTorrentLine = function(torrentLine){
@@ -241,7 +230,5 @@ let keypressListenerCallBack = function(ch, key){
 } ;
 
 drawInterface();
-keypress(process.stdin);
-process.stdin.on('keypress', keypressListenerCallBack);
-process.stdin.setRawMode(true);
-process.stdin.resume();
+
+module.exports.drawInterface = drawInterface()

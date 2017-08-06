@@ -3,7 +3,7 @@
  */
 
 
-
+let logger = require("../log")
 var Dict = require("./BencodeDict");
 var fs = require("fs");
 
@@ -111,7 +111,7 @@ Decode.decode_list = function(){
 
 
 Decode.decode_string = function(string_length){
-  //console.log("String length : "+parseInt(string_length))
+  logger.debug("String length : "+parseInt(string_length))
   var string_length_toInt = parseInt(string_length);
   var string_asbytes = Decode.data.slice(Decode.position,Decode.position+string_length_toInt);
   Decode.position += string_length_toInt;

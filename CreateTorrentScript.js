@@ -3,6 +3,7 @@
 /**
  * Created by chris on 23/05/16.
  */
+let logger = require("./log.js")
 
 var readlineSync = require('readline-sync');
 var crypto = require('crypto');
@@ -43,9 +44,6 @@ infoDictionary.on("info_end", function(infoDict){
 
   var torrentSavePath = readlineSync.question("Where do you want to save the file ? \n", {display : "stdout"});
   var torrentFile = new Encode(torrentDict, "UTF-8", torrentSavePath);
-  console.log(torrentDict.toString())
+  logger.info(torrentDict.toString())
 });
 infoDictionary.create();
-
-
-//console.log(infoDictionary.toString())

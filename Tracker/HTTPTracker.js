@@ -1,5 +1,6 @@
 const http = require("http");
 const Utils = require("../Utils");
+let logger = require("../log")
 
 var compact2string = require("compact2string");
 var Tracker = require("./Tracker");
@@ -30,10 +31,10 @@ HTTPTracker.prototype.prepareHTTPRequest = function (torrentEvent) {
 HTTPTracker.prototype.executeHTTPRequest = function (torrentEvent) {
     var self = this;
     var httpRequest = this.prepareHTTPRequest(torrentEvent);
-    console.log(httpRequest);
+    logger.verbose(httpRequest);
     http.get(httpRequest, function (response) {
-        console.log("Response Status Code : " + response.statusCode);
-        console.log("Response Status Message : " + response.statusMessage);
+        logger.verbose("Response Status Code : " + response.statusCode);
+        logger.verbose("Response Status Message : " + response.statusMessage);
         var responseBody = '';
 
         response.on("data", function (chunk) {
@@ -44,11 +45,11 @@ HTTPTracker.prototype.executeHTTPRequest = function (torrentEvent) {
             var bufferedData = Buffer.from(responseBody);
             var bencodedResponse = new Decode(bufferedData);
             if (!("failure reason" in bencodedResponse)) {
-                console.log(bencodedResponse);
+                logger.verbose(bencodedResponse);
                 callBackTrackerResponseHTTP.call(self, bencodedResponse)
             } else {
-                console.log("FAILURE REASON");
-                console.log(bencodedResponse)
+                logger.verbose("FAILURE REASON");
+                logger.verbose(bencodedResponse)
             }
         })
     })
@@ -63,7 +64,7 @@ var callBackTrackerResponseHTTP = function (bencodedResponse) {
     }
     if ("peers" in bencodedResponse) {
         var peerList = compact2string.multi(bencodedResponse["peers"]);
-        console.log("peers : " + peerList);
+        logger.verbose("peers : " + peerList);
         peerList.forEach(function (peer) {
             this.emit("peer", peer)
         }, self)
@@ -71,7 +72,7 @@ var callBackTrackerResponseHTTP = function (bencodedResponse) {
 
     if ("peers6" in bencodedResponse) {
         var peer6List = compact2string.multi6(bencodedResponse["peers6"]);
-        console.log("peer6List : " + peer6List);
+        logger.verbose("peer6List : " + peer6List);
         peer6List.forEach(function (peer6) {
             this.emit("peer6", peer6)
         }, self)
