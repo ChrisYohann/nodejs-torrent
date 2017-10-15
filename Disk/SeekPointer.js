@@ -1,10 +1,10 @@
-var randomAccessFile = require('random-access-file');
+const randomAccessFile = require('random-access-file');
 
-var SeekPointer = module.exports = function SeekPointer(file, fileOffset, pieceOffset, fileLength){
-  this._file = file ;
-  this._fileOffset = fileOffset ;
-  this._pieceOffset = pieceOffset;
-  this._fileLength = fileLength || 0
+const SeekPointer = module.exports = function SeekPointer(file, fileOffset, pieceOffset, fileLength) {
+    this._file = file;
+    this._fileOffset = fileOffset;
+    this._pieceOffset = pieceOffset;
+    this._fileLength = fileLength || 0
 };
 
 SeekPointer.prototype.getFile = function(){

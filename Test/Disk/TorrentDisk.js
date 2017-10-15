@@ -1,23 +1,23 @@
 require('any-promise/register/rsvp');
-var randomAccessFile = require('random-access-file');
-var SeekPointer = require("../../Disk/SeekPointer.js");
-var Piece = require("../../Disk/Piece.js");
-var Promise = require('any-promise');
-var fsp = require('fs-promise');
-var crypto = require('crypto');
-var mocha = require('mocha');
-var fs = require("fs");
-var os = require('os');
-var Decode = require("../../Bencode/Decode");
-var TorrentDisk = require("../../Disk/TorrentDisk");
-var path = require("path");
+const randomAccessFile = require('random-access-file');
+const SeekPointer = require("../../Disk/SeekPointer.js");
+const Piece = require("../../Disk/Piece.js");
+const Promise = require('any-promise');
+const fsp = require('fs-promise');
+const crypto = require('crypto');
+const mocha = require('mocha');
+const fs = require("fs");
+const os = require('os');
+const Decode = require("../../Bencode/Decode");
+const TorrentDisk = require("../../Disk/TorrentDisk");
+const path = require("path");
 
 //Test Modules
-var chai = require('chai');
-var chaiAsPromised = require('chai-as-promised');
-var should = chai.should();
-var expect = chai.expect;
-var assert = chai.assert;
+const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
+const should = chai.should();
+const expect = chai.expect;
+const assert = chai.assert;
 chai.use(chaiAsPromised);
 
 
@@ -28,13 +28,13 @@ const testMultipleFiles = "./Test/Disk/TestFiles/TestMultipleFiles";
 
 describe("### TORRENT DISK TESTS ###", function(){
   describe("*** Init Torrent Disk***", function(){
-    var parsedTorrentSingleFile = new Decode(testSingleFile+".torrent");
-    var parsedTorrentMultipleFiles = new Decode(testMultipleFiles+".torrent");
-    console.log(parsedTorrentSingleFile.toString());
-    var torrentDiskSingleFile = new TorrentDisk(parsedTorrentSingleFile, testSingleFile+".bin");
-    var torrentDiskMultipleFiles = new TorrentDisk(parsedTorrentMultipleFiles, testMultipleFiles);
+      const parsedTorrentSingleFile = new Decode(testSingleFile + ".torrent");
+      const parsedTorrentMultipleFiles = new Decode(testMultipleFiles + ".torrent");
+      console.log(parsedTorrentSingleFile.toString());
+      const torrentDiskSingleFile = new TorrentDisk(parsedTorrentSingleFile, testSingleFile + ".bin");
+      const torrentDiskMultipleFiles = new TorrentDisk(parsedTorrentMultipleFiles, testMultipleFiles);
 
-    beforeEach(function(){
+      beforeEach(function(){
       torrentDiskMultipleFiles.clear();
       torrentDiskSingleFile.clear()
     });
@@ -65,13 +65,13 @@ describe("### TORRENT DISK TESTS ###", function(){
     describe("Init Pieces Single File", function(){
       it("It should init cursor to the right place", function(){
         torrentDiskSingleFile.initPieces();
-        for(var i = 0 ; i<10 ; i++){
+        for(let i = 0 ; i<10 ; i++){
           torrentDiskSingleFile.pieces[i]["files"].forEach(function(fileCursor){
-            var filename = fileCursor.getFile().filename;
-            var offsetFile = fileCursor.getFileOffset();
-            var offsetPiece = fileCursor.getPieceOffset();
-            var result = { name : filename, fileOffset : offsetFile, pieceOffset : offsetPiece};
-            expect(result).to.eql({name : testSingleFile+".bin", fileOffset : i, pieceOffset : 0})
+              const filename = fileCursor.getFile().filename;
+              const offsetFile = fileCursor.getFileOffset();
+              const offsetPiece = fileCursor.getPieceOffset();
+              const result = {name: filename, fileOffset: offsetFile, pieceOffset: offsetPiece};
+              expect(result).to.eql({name : testSingleFile+".bin", fileOffset : i, pieceOffset : 0})
           })
         }
       })
@@ -80,13 +80,13 @@ describe("### TORRENT DISK TESTS ###", function(){
     describe("Init Pieces multipleFiles with Piece overlap", function(){
       it("Test several files function", function(){
         torrentDiskMultipleFiles.initPieces();
-        var actualResult = [];
+          const actualResult = [];
           torrentDiskMultipleFiles.pieces[5]["files"].forEach(function(fileCursor){
-            var filename = fileCursor.getFile().filename;
-            var offsetFile = fileCursor.getFileOffset();
-            var offsetPiece = fileCursor.getPieceOffset();
-            var result = { name : filename, fileOffset : offsetFile, pieceOffset : offsetPiece};
-            actualResult.push(result)
+              const filename = fileCursor.getFile().filename;
+              const offsetFile = fileCursor.getFileOffset();
+              const offsetPiece = fileCursor.getPieceOffset();
+              const result = {name: filename, fileOffset: offsetFile, pieceOffset: offsetPiece};
+              actualResult.push(result)
           });
           expect(actualResult).to.eql([{name : testMultipleFiles+path.sep+"File1.bin", fileOffset : 10, pieceOffset : 0}, {name : testMultipleFiles+path.sep+"File2.bin", fileOffset : 0, pieceOffset : 1}])
       })
@@ -94,10 +94,10 @@ describe("### TORRENT DISK TESTS ###", function(){
   });
 
   describe("Test verify function for Single File", function(){
-    var parsedTorrentSingleFile = new Decode(testSingleFile+".torrent");
-    var torrentDiskSingleFile = new TorrentDisk(parsedTorrentSingleFile, testSingleFile+".bin");
+      const parsedTorrentSingleFile = new Decode(testSingleFile + ".torrent");
+      const torrentDiskSingleFile = new TorrentDisk(parsedTorrentSingleFile, testSingleFile + ".bin");
 
-    describe("Test verify on a 100% completed File", function(){
+      describe("Test verify on a 100% completed File", function(){
       it("The function should return the length of the file", function(){
         //torrentDiskSingleFile.initPieces()
         return torrentDiskSingleFile.verify().should.eventually.equal(10)
@@ -106,10 +106,10 @@ describe("### TORRENT DISK TESTS ###", function(){
   });
 
   describe("Test verify function for MultipleFiles", function(){
-    var parsedTorrentMultipleFiles = new Decode(testMultipleFiles+".torrent");
-    var torrentDiskMultipleFiles = new TorrentDisk(parsedTorrentMultipleFiles, testMultipleFiles);
+      const parsedTorrentMultipleFiles = new Decode(testMultipleFiles + ".torrent");
+      const torrentDiskMultipleFiles = new TorrentDisk(parsedTorrentMultipleFiles, testMultipleFiles);
 
-    describe("Test verify function on a 100% completed Files", function(){
+      describe("Test verify function on a 100% completed Files", function(){
       it("The function should return the sum of both files lengths", function(){
         //torrentDiskMultipleFiles.initPieces()
         console.log(`Total Size : ${torrentDiskMultipleFiles.totalSize} ; Piece Length : ${torrentDiskMultipleFiles["metaFile"]["info"]["piece length"]}`);
@@ -120,27 +120,27 @@ describe("### TORRENT DISK TESTS ###", function(){
   });
 
   describe("Test Bitfield function for SingleFile", function(){
-    var parsedTorrentSingleFile = new Decode(testSingleFile+".torrent");
-    var torrentDiskSingleFile = new TorrentDisk(parsedTorrentSingleFile, testSingleFile+".bin");
+      const parsedTorrentSingleFile = new Decode(testSingleFile + ".torrent");
+      const torrentDiskSingleFile = new TorrentDisk(parsedTorrentSingleFile, testSingleFile + ".bin");
 
-    describe("Test BitField function on a 100% completed File", function(){
+      describe("Test BitField function on a 100% completed File", function(){
       it("All the index for 10 pieces should be set to 1", function(){
         //torrentDiskSingleFile.initPieces()
-        var expectedResult = Buffer.from([0xff, 0xc0]);
-        return torrentDiskSingleFile.getBitfieldFromFile().should.eventually.deep.equal(expectedResult)
+          const expectedResult = Buffer.from([0xff, 0xc0]);
+          return torrentDiskSingleFile.getBitfieldFromFile().should.eventually.deep.equal(expectedResult)
       })
     })
   });
 
   describe("Test Bitfield function for MultipleFiles", function(){
-    var parsedTorrentMultipleFiles = new Decode(testMultipleFiles+".torrent");
-    var torrentDiskMultipleFiles = new TorrentDisk(parsedTorrentMultipleFiles, testMultipleFiles);
+      const parsedTorrentMultipleFiles = new Decode(testMultipleFiles + ".torrent");
+      const torrentDiskMultipleFiles = new TorrentDisk(parsedTorrentMultipleFiles, testMultipleFiles);
 
-    describe("Test BitField function on a 100% completed File", function(){
+      describe("Test BitField function on a 100% completed File", function(){
       it("All the index for 11 pieces should be set to 1", function(){
         //torrentDiskMultipleFiles.initPieces()
-        var expectedResult = Buffer.from([0xff, 0xe0]);
-        return torrentDiskMultipleFiles.getBitfieldFromFile().should.eventually.deep.equal(expectedResult)
+          const expectedResult = Buffer.from([0xff, 0xe0]);
+          return torrentDiskMultipleFiles.getBitfieldFromFile().should.eventually.deep.equal(expectedResult)
       })
     })
   })

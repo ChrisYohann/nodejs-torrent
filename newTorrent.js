@@ -1,18 +1,18 @@
-var fs = require('fs');
-var path = require('path');
-var BencodeDict = require('./Bencode/BencodeDict.js');
-var InfoDictionary = require('./Bencode/InfoDictionary.js');
-var Encode = require('./Bencode/Encode.js');
+const fs = require('fs');
+const path = require('path');
+const BencodeDict = require('./Bencode/BencodeDict.js');
+const InfoDictionary = require('./Bencode/InfoDictionary.js');
+const Encode = require('./Bencode/Encode.js');
 
 let CreateTorrent = module.exports = function CreateTorrent(torrentProperties, callback){
-    var filepath = torrentProperties["filepath"];
-    var stats = fs.statSync(filepath);
-    var fileMode = stats.isFile() ? "SINGLE_FILE_MODE" : "MULTIPLE_FILE_MODE" ;
+    const filepath = torrentProperties["filepath"];
+    const stats = fs.statSync(filepath);
+    const fileMode = stats.isFile() ? "SINGLE_FILE_MODE" : "MULTIPLE_FILE_MODE";
 
-    var infoDictionary = new InfoDictionary(filepath, fileMode) ;
+    const infoDictionary = new InfoDictionary(filepath, fileMode);
 
     infoDictionary.on("info_end", function(infoDict){
-        var torrentDict = new BencodeDict();
+        const torrentDict = new BencodeDict();
         torrentDict.putContent("announce", torrentProperties["announce"]);
         torrentDict.putContent("announce-list", torrentProperties["announce-list"].split(";").map(function(element,index,array){ return element.split(" ")}));
         torrentDict.putContent("comment", torrentProperties["comment"]);
@@ -23,4 +23,4 @@ let CreateTorrent = module.exports = function CreateTorrent(torrentProperties, c
         callback(torrentDict);
     });
     infoDictionary.create();
-}
+};

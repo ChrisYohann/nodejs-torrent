@@ -19,8 +19,8 @@ let logger = new (winston.Logger)({
     ],
     colors : loggingColors,
     level : process.env.NODE_LEVEL || 'info'
-})
+});
 
-module.exports = logger
+module.exports = logger;
 //logger.log("debug", "SALUT")
 

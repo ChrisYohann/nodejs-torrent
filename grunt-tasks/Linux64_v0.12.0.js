@@ -1,10 +1,10 @@
 module.exports = function (grunt) {
   'use strict';
 
-  var paths = grunt.config.get('paths'),
-    pkg = grunt.config.get('pkg');
+    const paths = grunt.config.get('paths'),
+        pkg = grunt.config.get('pkg');
 
-  grunt.config.merge({
+    grunt.config.merge({
     clean: {
       'Linux64_v0.12.0': {
         files: [{

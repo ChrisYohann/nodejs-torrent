@@ -1,24 +1,24 @@
-#!/usr/bin/node
+#!/usr/bin/env node
 
 /**
  * Created by chris on 23/05/16.
  */
-let logger = require("./log.js")
+let logger = require("./log.js");
 
-var readlineSync = require('readline-sync');
-var crypto = require('crypto');
-var fs = require('fs');
-var path = require('path');
-var BencodeDict = require('./Bencode/BencodeDict.js');
-var InfoDictionary = require('./Bencode/InfoDictionary.js');
-var Encode = require('./Bencode/Encode.js');
+const readlineSync = require('readline-sync');
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+const BencodeDict = require('./Bencode/BencodeDict.js');
+const InfoDictionary = require('./Bencode/InfoDictionary.js');
+const Encode = require('./Bencode/Encode.js');
 
 
-var create_torrent_object = {};
-var bencode_dict_keys = ["announce", "announce-list", "comment", "filepath"];
+const create_torrent_object = {};
+const bencode_dict_keys = ["announce", "announce-list", "comment", "filepath"];
 
 bencode_dict_keys.forEach(function(element,index,array) {
-    var torrent_property = readlineSync.question(element+" : \n", {display : "stdout"});
+    const torrent_property = readlineSync.question(element + " : \n", {display: "stdout"});
     Object.defineProperty(create_torrent_object, element, {
       configurable : true,
       enumerable : true,
@@ -26,15 +26,15 @@ bencode_dict_keys.forEach(function(element,index,array) {
     })
 });
 
-var filepath = create_torrent_object["filepath"];
-var stats = fs.statSync(filepath);
-var fileMode = stats.isFile() ? "SINGLE_FILE_MODE" : "MULTIPLE_FILE_MODE" ;
+const filepath = create_torrent_object["filepath"];
+const stats = fs.statSync(filepath);
+const fileMode = stats.isFile() ? "SINGLE_FILE_MODE" : "MULTIPLE_FILE_MODE";
 
-var infoDictionary = new InfoDictionary(filepath, fileMode) ;
+const infoDictionary = new InfoDictionary(filepath, fileMode);
 
 infoDictionary.on("info_end", function(infoDict){
-  var torrentDict = new BencodeDict();
-  torrentDict.putContent("announce", create_torrent_object["announce"]);
+    const torrentDict = new BencodeDict();
+    torrentDict.putContent("announce", create_torrent_object["announce"]);
   torrentDict.putContent("announce-list", create_torrent_object["announce-list"].split(";").map(function(element,index,array){ return element.split(" ")}));
   torrentDict.putContent("comment", create_torrent_object["comment"]);
   torrentDict.putContent("created by", "nhyne");
@@ -42,8 +42,8 @@ infoDictionary.on("info_end", function(infoDict){
   torrentDict.putContent("encoding", "utf-8");
   torrentDict.putContent("info",infoDict);
 
-  var torrentSavePath = readlineSync.question("Where do you want to save the file ? \n", {display : "stdout"});
-  var torrentFile = new Encode(torrentDict, "UTF-8", torrentSavePath);
-  logger.info(torrentDict.toString())
+    const torrentSavePath = readlineSync.question("Where do you want to save the file ? \n", {display: "stdout"});
+    const torrentFile = new Encode(torrentDict, "UTF-8", torrentSavePath);
+    logger.info(torrentDict.toString())
 });
 infoDictionary.create();

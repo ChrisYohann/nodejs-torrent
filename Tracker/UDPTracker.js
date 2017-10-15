@@ -1,55 +1,53 @@
 const dgram = require('dgram');
 const Utils = require("../Utils");
 const crypto = require("crypto");
-let logger = require("../log")
+let logger = require("../log");
 
-var compact2string = require("compact2string");
-var Tracker = require("./Tracker");
-var util = require('util');
-var Decode = require("../Bencode/Decode");
-var url = require("url");
+const compact2string = require("compact2string");
+const Tracker = require("./Tracker");
+const util = require('util');
+const Decode = require("../Bencode/Decode");
+const url = require("url");
 
-var DEFAULT_CONNECTION_ID = 0x41727101980;
-var CONNECT_ACTION = 0;
-var ANNOUNCE_ACTION = 1;
-var SCRAPE_ACTION = 2;
-var ERROR_ACTION = 3;
+const DEFAULT_CONNECTION_ID = 0x41727101980;
+const CONNECT_ACTION = 0;
+const ANNOUNCE_ACTION = 1;
+const SCRAPE_ACTION = 2;
+const ERROR_ACTION = 3;
 
-var udpAddressRegex = /^(udp:\/\/[\w.-]+):(\d{2,})[^\s]*$/g;
+const UDPTracker = module.exports = function UDPTracker(clientTorrent, announceURL) {
+    Tracker.call(this, clientTorrent, announceURL);
+    this.transactionID = crypto.randomBytes(4);
+    this.connectionID = undefined;
 
-var UDPTracker = module.exports = function UDPTracker(clientTorrent, announceURL){
-  Tracker.call(this, clientTorrent, announceURL);
-  this.transactionID = crypto.randomBytes(4);
-  this.connectionID = undefined;
+    const urlObject = url.parse(announceURL);
+    this.trackerAddress = (urlObject.hostname == "0.0.0.0" ? "127.0.0.1" : urlObject.hostname);
+    this.trackerPort = urlObject.port;
+    logger.verbose(`Tracker Infos : ${this.trackerAddress}:${this.trackerPort}`);
 
-  var urlObject = url.parse(announceURL);
-  this.trackerAddress = (urlObject.hostname == "0.0.0.0" ? "127.0.0.1" : urlObject.hostname);
-  this.trackerPort = urlObject.port;
-  logger.verbose(`Tracker Infos : ${this.trackerAddress}:${this.trackerPort}`);
+    const server = dgram.createSocket("udp4");
+    const self = this;
 
-  var server = dgram.createSocket("udp4");
-  var self = this;
+    server.on('message', function (message, remote) {
+        callbackTrackerResponseUDP.call(self, message, remote)
+    });
 
-  server.on('message', function(message, remote){
-    callbackTrackerResponseUDP.call(self, message, remote)
-  });
+    server.on('listening', () => {
+        const address = server.address();
+        logger.verbose(`Server listening ${address.address}:${address.port}`);
+        self.makeUDPConnectRequest();
+    });
 
-  server.on('listening', () => {
-    var address = server.address();
-    logger.verbose(`Server listening ${address.address}:${address.port}`);
-    self.makeUDPConnectRequest();
-  });
-
-  this.server = server;
-  server.bind()
+    this.server = server;
+    server.bind()
 };
 
 util.inherits(UDPTracker, Tracker);
 
 UDPTracker.prototype.makeUDPConnectRequest = function(){
-  var connectMessage = Buffer.alloc(12);
-  var connectionIDBuffer = Buffer.from(Utils.decimalToHexString(DEFAULT_CONNECTION_ID), "hex");
-  connectionIDBuffer.copy(connectMessage, 0+8-connectionIDBuffer.length);
+    let connectMessage = Buffer.alloc(12);
+    const connectionIDBuffer = Buffer.from(Utils.decimalToHexString(DEFAULT_CONNECTION_ID), "hex");
+    connectionIDBuffer.copy(connectMessage, 0+8-connectionIDBuffer.length);
   connectMessage.writeInt32BE(CONNECT_ACTION, 8);
   connectMessage = Buffer.concat([connectMessage, this.transactionID]);
   logger.debug(connectMessage);
@@ -79,22 +77,22 @@ UDPTracker.prototype.makeUDPAnnounceRequest = function(torrentEvent){
 92      32-bit integer  num_want        -1 // default
 96      16-bit integer  port
 98*/
-    var requestMessage = Buffer.alloc(98);
+    const requestMessage = Buffer.alloc(98);
     logger.debug("Connection ID : "+this.connectionID);
-    var connectionIDBuffer = Buffer.from(Utils.decimalToHexString(DEFAULT_CONNECTION_ID), "hex");
+    const connectionIDBuffer = Buffer.from(Utils.decimalToHexString(DEFAULT_CONNECTION_ID), "hex");
     connectionIDBuffer.copy(requestMessage, 0 + 8 - connectionIDBuffer.length);
     requestMessage.writeInt32BE(ANNOUNCE_ACTION, 8);
     requestMessage.writeInt32BE(this.transactionID.readInt32BE(0), 12);
 
-    var info_hash = Utils.createInfoHash(this.client["_metaData"]["info"]);
+    const info_hash = Utils.createInfoHash(this.client["_metaData"]["info"]);
     requestMessage.write(Utils.encodeBuffer(info_hash), 16, 20);
 
     requestMessage.write("CLI Torrent Client", 36, 20);
-    var amountDownloadedBuffer = Buffer.from(Utils.decimalToHexString(this.client.getDownloaded()), "hex");
+    const amountDownloadedBuffer = Buffer.from(Utils.decimalToHexString(this.client.getDownloaded()), "hex");
     amountDownloadedBuffer.copy(requestMessage, 56 + 8 - amountDownloadedBuffer.length);
-    var amountLeftBuffer = Buffer.from(Utils.decimalToHexString(this.client.getLeft()), "hex");
+    const amountLeftBuffer = Buffer.from(Utils.decimalToHexString(this.client.getLeft()), "hex");
     amountLeftBuffer.copy(requestMessage, 64 + 8 - amountLeftBuffer.length);
-    var amountUploadedBuffer = Buffer.from(Utils.decimalToHexString(this.client.getUploaded()), "hex");
+    const amountUploadedBuffer = Buffer.from(Utils.decimalToHexString(this.client.getUploaded()), "hex");
     amountUploadedBuffer.copy(requestMessage, 72 + 8 - amountUploadedBuffer.length);
     requestMessage.writeInt32BE(torrentEvent, 80);
     requestMessage.writeUInt32BE(0, 84);
@@ -116,13 +114,13 @@ UDPTracker.prototype.makeUDPAnnounceRequest = function(torrentEvent){
 
 UDPTracker.prototype.onConnectResponse = function(message){
   if(message.length < 16){
-      logger.error("Error : Connect Message should be 16 bytes length")
+      logger.error("Error : Connect Message should be 16 bytes length");
     throw "Error : Connect Message should be 16 bytes length"
   }
 
-  var transactionID = message.readInt32BE(4);
-  if(transactionID != this.transactionID.readInt32BE(0)){
-      logger.error("Error : TransactionID does not match the one sent by the client")
+    const transactionID = message.readInt32BE(4);
+    if(transactionID != this.transactionID.readInt32BE(0)){
+      logger.error("Error : TransactionID does not match the one sent by the client");
     throw "Error : TransactionID does not match the one sent by the client"
   }
 
@@ -145,23 +143,21 @@ UDPTracker.prototype.onAnnounceResponse = function(message){
     throw "Error : Request Message should be 20 bytes length"
   }
 
-  var transactionID = message.readInt32BE(4);
-  if(transactionID != this.transactionID.readInt32BE(0)){
-      logger.error("Error : TransactionID does not match the one sent by the client")
+    const transactionID = message.readInt32BE(4);
+    if(transactionID != this.transactionID.readInt32BE(0)){
+      logger.error("Error : TransactionID does not match the one sent by the client");
     throw "Error : TransactionID does not match the one sent by the client"
   }
 
   this.intervalInSeconds = message.readInt32BE(8);
-  var leechers = message.readInt32BE(12);
-  var seeders = message.readInt32BE(16);
-  logger.info(`Seeders : ${seeders} Leechers : ${leechers}`);
+    const leechers = message.readInt32BE(12);
+    const seeders = message.readInt32BE(16);
+    logger.info(`Seeders : ${seeders} Leechers : ${leechers}`);
 
-  var peersPart = message.slice(20);
-  var peerList = compact2string.multi(peersPart);
-  logger.verbose("peers : "+peerList);
-  peerList.forEach(function(peer){
-    this.emit("peer", peer)
-  }, this)
+    const peersPart = message.slice(20);
+    const peerList = compact2string.multi(peersPart);
+    logger.verbose("peers : "+peerList);
+    this.emit("peers", peerList)
 };
 
 var callbackTrackerResponseUDP = function(message, remote){
@@ -172,8 +168,8 @@ var callbackTrackerResponseUDP = function(message, remote){
     return ;
   }
 
-  var action = message.readInt32BE(0);
-  logger.verbose("Action : "+action);
+    const action = message.readInt32BE(0);
+    logger.verbose("Action : "+action);
   switch(action){
     case CONNECT_ACTION :
       this.onConnectResponse(message) ;

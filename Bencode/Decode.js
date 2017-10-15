@@ -3,9 +3,9 @@
  */
 
 
-let logger = require("../log")
-var Dict = require("./BencodeDict");
-var fs = require("fs");
+let logger = require("../log");
+const Dict = require("./BencodeDict");
+const fs = require("fs");
 
 //UTF-8 to Hex characters
 /* d : 0x64
@@ -36,13 +36,13 @@ Decode.encoding = null;
 Decode.dictionary = null;
 
 Decode.decode_dictionary = function(){
-  var bdictionary = new Dict();
-  var result = [];
-  var string_length = "";
-  while(Decode.position < Decode.data.length) {
+    const bdictionary = new Dict();
+    const result = [];
+    let string_length = "";
+    while(Decode.position < Decode.data.length) {
 
-    var character = Decode.data[Decode.position];
-    Decode.position++;
+      const character = Decode.data[Decode.position];
+      Decode.position++;
 
     if (Decode.numberisInteger(String.fromCharCode(character))) {
       string_length += String.fromCharCode(character)
@@ -74,12 +74,12 @@ Decode.decode_dictionary = function(){
 };
 
 Decode.decode_list = function(){
-  var result = [];
-  var string_length = "";
-  while(Decode.position < Decode.data.length) {
+    const result = [];
+    let string_length = "";
+    while(Decode.position < Decode.data.length) {
 
-    var character = Decode.data[Decode.position];
-    Decode.position++;
+      const character = Decode.data[Decode.position];
+      Decode.position++;
 
     if (Decode.numberisInteger(String.fromCharCode(character))) {
       string_length += String.fromCharCode(character)
@@ -111,21 +111,21 @@ Decode.decode_list = function(){
 
 
 Decode.decode_string = function(string_length){
-  logger.debug("String length : "+parseInt(string_length))
-  var string_length_toInt = parseInt(string_length);
-  var string_asbytes = Decode.data.slice(Decode.position,Decode.position+string_length_toInt);
-  Decode.position += string_length_toInt;
+  logger.debug("String length : "+parseInt(string_length));
+    const string_length_toInt = parseInt(string_length);
+    const string_asbytes = Decode.data.slice(Decode.position, Decode.position + string_length_toInt);
+    Decode.position += string_length_toInt;
   //console.log(string_asbytes.toString('ascii'))
   return string_asbytes
 };
 
 Decode.decode_integer = function(){
 
-    var number = "";
+    let number = "";
 
     while (Decode.position < Decode.data.length){
-      var digit = Decode.data[Decode.position];
-      Decode.position++;
+        const digit = Decode.data[Decode.position];
+        Decode.position++;
       if(Decode.numberisInteger(String.fromCharCode(digit))){
         number += String.fromCharCode(digit)
       } else{
@@ -138,8 +138,8 @@ Decode.decode_integer = function(){
 
 
 Decode.numberisInteger = function(str){
-   var number = parseInt(str,10);
-   return !isNaN(number)
+    const number = parseInt(str, 10);
+    return !isNaN(number)
 };
 
 

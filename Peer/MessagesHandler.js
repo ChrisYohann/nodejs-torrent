@@ -1,29 +1,29 @@
-let logger = require("../log")
-var Messages = require("./TorrentMessages");
-var KeepAlive = Messages.KeepAlive;
-var Choke = Messages.Choke;
-var Unchoke = Messages.Unchoke;
-var Interested = Messages.Interested;
-var NotInterested = Messages.NotInterested;
-var Have = Messages.Have;
-var Bitfield = Messages.Bitfield;
-var Request = Messages.Request;
-var Piece = Messages.Piece;
-var Cancel = Messages.Cancel;
+let logger = require("../log");
+const Messages = require("./TorrentMessages");
+const KeepAlive = Messages.KeepAlive;
+const Choke = Messages.Choke;
+const Unchoke = Messages.Unchoke;
+const Interested = Messages.Interested;
+const NotInterested = Messages.NotInterested;
+const Have = Messages.Have;
+const Bitfield = Messages.Bitfield;
+const Request = Messages.Request;
+const Piece = Messages.Piece;
+const Cancel = Messages.Cancel;
 
 const MESSAGE_ID_MAX = 9;
 const MESSAGE_ID_MIN = 0;
 const MESSAGE_MAX_LENGTH = (1<<14) + 13;
 const MESSAGE_MIN_LENGTH = 0;
 
-var MessagesHandler = module.exports = function MessagesHandler(){
+const MessagesHandler = module.exports = function MessagesHandler() {
 
 };
 
 MessagesHandler.prototype.parseTorrentMessage = function(buffer){
-  var offset = 0;
-  var lengthPrefix = -1;
-  try{
+    let offset = 0;
+    let lengthPrefix = -1;
+    try{
     lengthPrefix = buffer.readInt32BE(offset);
     offset+=4;
     logger.verbose(" Length : "+lengthPrefix);
@@ -39,8 +39,8 @@ MessagesHandler.prototype.parseTorrentMessage = function(buffer){
     return new KeepAlive();
   }
 
-  var messageID = buffer[offset];
-  offset+=1;
+    const messageID = buffer[offset];
+    offset+=1;
   try{
     switch(messageID){
       case 0 :
@@ -52,13 +52,13 @@ MessagesHandler.prototype.parseTorrentMessage = function(buffer){
       case 3 :
               return new NotInterested();
       case 4 :
-              var pieceIndex = buffer.readInt32BE(offset);
-              offset+=4;
+          const pieceIndex = buffer.readInt32BE(offset);
+          offset+=4;
               logger.verbose("Have : Index = " + pieceIndex);
               return new Have(pieceIndex);
       case 5 :
-             var bitfieldBuffer = buffer.slice(offset);
-             offset+= bitfieldBuffer.length;
+          const bitfieldBuffer = buffer.slice(offset);
+          offset+= bitfieldBuffer.length;
              return new Bitfield(bitfieldBuffer);
       case 6 :
              var index = buffer.readInt32BE(offset);
@@ -70,8 +70,8 @@ MessagesHandler.prototype.parseTorrentMessage = function(buffer){
       case 7 :
              var index = buffer.readInt32BE(offset);
              var begin = buffer.readInt32BE(offset+4);
-             var block = buffer.slice(offset+8);
-             offset+= 8+block.length;
+          const block = buffer.slice(offset + 8);
+          offset+= 8+block.length;
              logger.verbose("Request : Index = " + index + " Begin : " + begin + " Length : " + lengthPrefix-9);
              return new Piece(index, begin, block);
      case 8 :

@@ -5,7 +5,7 @@ const keypress = require('keypress') ;
 let inquirer = require('inquirer') ;
 let CreateTorrent = require('../newTorrent');
 let Torrent = require('../Torrent/Torrent');
-let TorrentLine = require('./torrentLine')
+let TorrentLine = require('./torrentLine');
 let Encode = require('../Bencode/Encode.js');
 
 const NB_COLUMNS = process.stdout.columns || 80 ;
@@ -15,7 +15,7 @@ const ESCAPE_MODE = "escape" ;
 const CREATE_MODE = "create" ;
 
 let mode = ESCAPE_MODE ;
-let PROCESS_STDIN_EVENT_LOCKED = true
+let PROCESS_STDIN_EVENT_LOCKED = true;
 let cursorPosition = 0 ;
 let lastTorrentPosition = 2 ;
 
@@ -69,22 +69,22 @@ let drawInterface = function(){
     process.stdin.on('keypress', keypressListenerCallBack);
     process.stdin.setRawMode(true);
     process.stdin.resume();
-}
+};
 
 let addTorrentLine = function(torrentLine){
 
-}
+};
 
 let removeTorrentLine = function(torrentIndex){
 
-}
+};
 
 let clearFocus = function(){
     process.stdout.write(clc.move.to(2, cursorPosition+2));
     process.stdout.write(clc.erase.lineLeft);
     process.stdout.write("  ");
     process.stdout.write(clc.move.left(2));
-}
+};
 
 let addFocus = function(){
     process.stdout.write(clc.move.to(0, cursorPosition+2));
@@ -231,4 +231,4 @@ let keypressListenerCallBack = function(ch, key){
 
 drawInterface();
 
-module.exports.drawInterface = drawInterface()
+module.exports.drawInterface = drawInterface();

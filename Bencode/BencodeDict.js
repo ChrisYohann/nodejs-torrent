@@ -1,8 +1,8 @@
-var BencodeDict = module.exports = function BencodeDict() {
-  Object.defineProperty(this,"content",{
-    value : [],
-    enumerable : false
-  })
+const BencodeDict = module.exports = function BencodeDict() {
+    Object.defineProperty(this, "content", {
+        value: [],
+        enumerable: false
+    })
 };
 
 BencodeDict.prototype.getContent = function() {
@@ -16,16 +16,16 @@ BencodeDict.prototype.putContent = function(key,value) {
 
 BencodeDict.prototype.toString = function(){
 
-    var keySet = this.content ;
-    var tree = "\tDictionary"+"["+keySet.length+"] : \n" ;
+    const keySet = this.content;
+    let tree = "\tDictionary" + "[" + keySet.length + "] : \n";
 
     keySet.sort();
     keySet.forEach(function(element,index,array){
       if(element != "pieces"){
-        var value = this[element];
-        if(Buffer.isBuffer(element)){
-          var value_as_string = element.toString();
-          tree+= "\t\t"+element+" : "+value_as_string+" \n" ;
+          const value = this[element];
+          if(Buffer.isBuffer(element)){
+            const value_as_string = element.toString();
+            tree+= "\t\t"+element+" : "+value_as_string+" \n" ;
         } else {
           tree += "\t\t"+element+" : "+value.toString()+" \n" ;
         }

@@ -28,29 +28,29 @@ function escapeRequestWithBuffer(value){
 
 //Alternative to querystring.escape which does not support Buffers
 exports.stringify = function(obj){
-  var request = "";
-  var keys = Object.keys(obj);
-  if (keys.length <= 0)
+    let request = "";
+    const keys = Object.keys(obj);
+    if (keys.length <= 0)
     return request;
   Object.keys(obj).forEach(function(element,index,array){
-    var value = obj[element];
-    request+=element+'='+escapeRequestWithBuffer(value)+"&"
+      const value = obj[element];
+      request+=element+'='+escapeRequestWithBuffer(value)+"&"
   });
   return request.slice(0,-1)
 };
 
 exports.createInfoHash = function(metaData){
-  var bufferOutputStream = new streamBuffers.WritableStreamBuffer();
-  var dictEncoded = new Encode(metaData, 'utf8', bufferOutputStream);
-  var sha1_hash = crypto.createHash("sha1");
-  sha1_hash.update(bufferOutputStream.getContents());
-  var digest = sha1_hash.digest();
-  return digest
+    const bufferOutputStream = new streamBuffers.WritableStreamBuffer();
+    const dictEncoded = new Encode(metaData, 'utf8', bufferOutputStream);
+    const sha1_hash = crypto.createHash("sha1");
+    sha1_hash.update(bufferOutputStream.getContents());
+  // noinspection UnnecessaryLocalVariableJS
+  return sha1_hash.digest();
 };
 
 exports.decimalToHexString = function(number){
-  var hexString = number.toString(16);
-  if (hexString.length % 2 == 1){
+    const hexString = number.toString(16);
+    if (hexString.length % 2 == 1){
     return '0'+hexString
   } else {
     return hexString
