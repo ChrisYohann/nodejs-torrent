@@ -44,7 +44,7 @@ const UDPTracker = module.exports = function UDPTracker(clientTorrent, announceU
 
 util.inherits(UDPTracker, Tracker);
 
-UDPTracker.prototype.makeUDPConnectRequest = function(){
+UDPTracker.prototype.announce = function(){
     let connectMessage = Buffer.alloc(12);
     const connectionIDBuffer = Buffer.from(Utils.decimalToHexString(DEFAULT_CONNECTION_ID), "hex");
     connectionIDBuffer.copy(connectMessage, 0+8-connectionIDBuffer.length);
@@ -119,7 +119,7 @@ UDPTracker.prototype.onConnectResponse = function(message){
   }
 
     const transactionID = message.readInt32BE(4);
-    if(transactionID != this.transactionID.readInt32BE(0)){
+    if(transactionID != this.transactionID.readInt32BE(4)){
       logger.error("Error : TransactionID does not match the one sent by the client");
     throw "Error : TransactionID does not match the one sent by the client"
   }

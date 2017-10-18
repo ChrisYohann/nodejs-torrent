@@ -3,7 +3,6 @@ let fs = require('fs');
 let EventEmitter = require('events').EventEmitter;
 let util = require('util');
 let Torrent = require("../Torrent/Torrent");
-let PeerManager = require("../Peer/PeerManager");
 
 let TorrentManager = module.exports = function TorrentManager(port){
     EventEmitter.call(this);
@@ -32,11 +31,11 @@ let parseTorrentCallback = function(torrentManager, jsonTorrentsData){
         if("filepath" in element && "torrent_file" in element){
             let torrent = new Torrent(element["torrent_file"], element["filepath"]);
             let callbackInfoHash = function(digest){
-                let peerManager = new PeerManager(torrent, torrentManager.listeningPort);
-                obj["peerManager"] = peerManager;
+                torrent.listeningPort = torrentManager.listeningPort ;
                 obj["torrent"] = torrent ;
                 obj["infoHash"] = digest ;
                 torrentManager.torrents.push(obj);
+                torrent.start();
             };
             torrent.on("verified", function(completed){
                 torrent.getInfoHash(callbackInfoHash) ;

@@ -13,7 +13,7 @@ const HTTPTracker = module.exports = function HTTPTracker(clientTorrent, announc
 
 util.inherits(HTTPTracker, Tracker);
 
-HTTPTracker.prototype.prepareHTTPRequest = function (torrentEvent) {
+HTTPTracker.prototype.prepareHTTPRequest = function(torrentEvent) {
     const torrentInfos = this.client;
     const requestParams = {
         info_hash: Utils.createInfoHash(this._metaData["info"]),
@@ -28,7 +28,7 @@ HTTPTracker.prototype.prepareHTTPRequest = function (torrentEvent) {
     return this.announceURL + "?" + Utils.stringify(requestParams);
 };
 
-HTTPTracker.prototype.executeHTTPRequest = function (torrentEvent) {
+HTTPTracker.prototype.announce = function(torrentEvent) {
     const self = this;
     const httpRequest = this.prepareHTTPRequest(torrentEvent);
     logger.verbose(httpRequest);
