@@ -17,6 +17,7 @@ let logger = require("../log");
  */
 
 let Encode = module.exports = function (data,encoding,output){
+    let self = this;
     this.position = 0;
     this.data = data;
     this.encoding = encoding || "utf8";
@@ -35,7 +36,7 @@ let Encode = module.exports = function (data,encoding,output){
     this.encode_dictionary(this.data);
     this.wstream.end(function (){
       if(output != "undefined"){
-        logger.info(Encode.wstream.bytesWritten+" bytes written at "+Encode.wstream.path);
+        logger.info(self.wstream.bytesWritten+" bytes written at "+self.wstream.path);
       }
     })
 };
@@ -59,7 +60,7 @@ Encode.prototype.encode_dictionary = function(data){
       this.encode_dictionary(data[element])
     }
 
-  });
+  }, this);
   this.wstream.write("e")
 
 };
@@ -76,7 +77,7 @@ Encode.prototype.encode_list = function(data){
     } else {
       this.encode_dictionary(element);
     }
-  });
+  }, this);
   this.wstream.write("e")
 };
 
