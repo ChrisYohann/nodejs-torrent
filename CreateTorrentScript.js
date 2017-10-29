@@ -33,17 +33,16 @@ const fileMode = stats.isFile() ? "SINGLE_FILE_MODE" : "MULTIPLE_FILE_MODE";
 const infoDictionary = new InfoDictionary(filepath, fileMode);
 
 infoDictionary.on("info_end", function(infoDict){
-    const torrentDict = new BencodeDict();
-    torrentDict.putContent("announce", create_torrent_object["announce"]);
-  torrentDict.putContent("announce-list", create_torrent_object["announce-list"].split(";").map(function(element,index,array){ return element.split(" ")}));
-  torrentDict.putContent("comment", create_torrent_object["comment"]);
-  torrentDict.putContent("created by", "nhyne");
-  torrentDict.putContent("creation date", Math.round(Date.now()/1000));
-  torrentDict.putContent("encoding", "utf-8");
-  torrentDict.putContent("info",infoDict);
-
-    const torrentSavePath = readlineSync.question("Where do you want to save the file ? \n", {display: "stdout"});
-    const torrentFile = new Encode(torrentDict, "UTF-8", torrentSavePath);
-    logger.info(torrentDict.toString())
+	const torrentDict = new BencodeDict();
+	torrentDict.putContent("announce", create_torrent_object["announce"]);	
+	torrentDict.putContent("announce-list", create_torrent_object["announce-list"].split(";").map(function(element,index,array){ return element.split(" ")}));
+	torrentDict.putContent("comment", create_torrent_object["comment"]);
+ 	torrentDict.putContent("created by", "nhyne");
+ 	torrentDict.putContent("creation date", Math.round(Date.now()/1000));
+ 	torrentDict.putContent("encoding", "utf-8");
+ 	torrentDict.putContent("info",infoDict);
+    	const torrentSavePath = readlineSync.question("Where do you want to save the file ? \n", {display: "stdout"});
+    	const torrentFile = new Encode(torrentDict, "UTF-8", torrentSavePath);
+    	logger.info(torrentDict.toString())
 });
 infoDictionary.create();

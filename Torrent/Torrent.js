@@ -79,6 +79,10 @@ Torrent.prototype.start = function(){
     }
 };
 
+Torrent.prototype.seekForPeers =  function(){
+
+}
+
 Torrent.prototype.getInfoHash = function(callback){
     let self = this ;
     let infoDictionary = this._metaData["info"];

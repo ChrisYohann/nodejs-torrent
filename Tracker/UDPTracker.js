@@ -45,6 +45,7 @@ const UDPTracker = module.exports = function UDPTracker(clientTorrent, announceU
 util.inherits(UDPTracker, Tracker);
 
 UDPTracker.prototype.announce = function(){
+    logger.info(`Connecting to ${self.announceURL}`);
     let connectMessage = Buffer.alloc(12);
     const connectionIDBuffer = Buffer.from(Utils.decimalToHexString(DEFAULT_CONNECTION_ID), "hex");
     connectionIDBuffer.copy(connectMessage, 0+8-connectionIDBuffer.length);
