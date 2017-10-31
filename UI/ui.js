@@ -9,6 +9,7 @@ let TorrentLine = require('./torrentLine');
 let Encode = require('../Bencode/Encode.js');
 
 const NB_COLUMNS = process.stdout.columns || 80 ;
+const NB_ROWS = process.stdout.rows || 24 ;
 
 const FOCUS_MODE = "focus" ;
 const ESCAPE_MODE = "escape" ;
@@ -19,25 +20,62 @@ let PROCESS_STDIN_EVENT_LOCKED = true;
 let cursorPosition = 0 ;
 let lastTorrentPosition = 2 ;
 
-let torrents = [];
-
 let Line = CLI.Line;
 let LineBuffer = CLI.LineBuffer;
 let Progress = CLI.Progress;
 
-let outputBuffer = new LineBuffer({
-    x: 0,
-    y: 0,
-    width: 'console',
-    height: 'console'
-});
+let UI = module.exports = function(app){
+    this.mode = ESCAPE_MODE ;
+    this.cursorPosition = 0 ;
+    this.lastTorrentPosition = 2 ;
+    this.torrents = [];
+    this.content = [];
 
-let drawInterface = function(){
+    initContent.call(this);
+};
+
+UI.prototype.drawInterface = function(){
+    console.log("DRAW INTERFACE")
     process.stdout.write(clc.reset);
-    outputBuffer.lines = [];
 
-    //noinspection JSUnusedLocalSymbols
-    let header = new Line(outputBuffer)
+    let header = drawHeader();
+    let content = drawContent.call(this);
+    let footer = drawFooter.call(this);
+
+    header.output();
+    content.output();
+    footer.output();
+
+    process.stdout.write(clc.move.to(0, 2));
+    keypress(process.stdin);
+    process.stdin.on('keypress', keypressListenerCallBack.bind(this));
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+};
+
+UI.prototype.setListeners = function(){
+
+};
+
+let initContent = function(){
+    let self = this ;
+    this.torrents.forEach(function(torrent, index){
+        let torrentline = new TorrentLine(torrent);
+        torrentline.on("torrentChange", torrentChangeCallback(torrent));
+        this.content.push(torrentline);
+    })
+};
+
+let drawHeader = function(){
+
+    let headerBuffer = new LineBuffer({
+        x: 0,
+        y: 0,
+        width: 'console',
+        height: 2
+    });
+
+    let header = new Line(headerBuffer)
         .padding(4)
         .column('Name', Math.ceil(0.25*NB_COLUMNS))
         .column('Progress', Math.ceil(0.25*NB_COLUMNS))
@@ -52,23 +90,98 @@ let drawInterface = function(){
     }
 
     //noinspection JSUnusedLocalSymbols
-    let headerMargin = new Line(outputBuffer)
+    let headerMargin = new Line(headerBuffer)
         .column(headerSeparator, Math.ceil(0.95*NB_COLUMNS))
         .fill()
         .store();
 
-    torrents.forEach(function(torrent, index){
-        let torrentLine = new TorrentLine(torrent);
-        outputBuffer.addLine(torrentLine);
-        lastTorrentPosition+=1
+    return headerBuffer ;
+};
+
+let drawContent = function(){
+    console.log("Drawing Content");
+    let contentBuffer = new LineBuffer({
+        x: 0,
+        y: 2,
+        width: 'console',
+        height: NB_ROWS - 4
     });
 
-    outputBuffer.output();
-    process.stdout.write(clc.move.to(0, 2));
-    keypress(process.stdin);
-    process.stdin.on('keypress', keypressListenerCallBack);
-    process.stdin.setRawMode(true);
-    process.stdin.resume();
+    if(this.content.length > 0){
+        this.content.forEach(function(torrentLine){
+            contentBuffer.addLine(torrentLine.content);
+            this.lastTorrentPosition += 1 ;
+        });
+    } else {
+        contentBuffer.addLine(new Line()
+            .column(" ", 1)
+            .fill());
+    }
+
+    return contentBuffer ;
+};
+
+let drawFooter = function(){
+    let self = this;
+    let footerBuffer = new LineBuffer({
+        x: 0,
+        y: NB_ROWS - 2,
+        width: 'console',
+        height: 2
+    });
+
+    let optionsLine = (function(){
+        if (self.mode == ESCAPE_MODE){
+            return new Line(footerBuffer)
+                .padding(4)
+                .column("^N ", 3, [clc.inverse])
+                .column(" New", 4)
+                .column("  ")
+                .column("^O ", 3, [clc.inverse])
+                .column(" Open", 5)
+                .column("  ")
+                .column("^C ", 3, [clc.inverse])
+                .column(" Quit", 5)
+                .fill()
+                .store();
+        } else {
+            return new Line(footerBuffer)
+                .padding(4)
+                .column("^D", 2, [clc.inverse])
+                .column(" Delete", 7)
+                .column("  ")
+                .column("Enter", 5, [clc.inverse])
+                .column(" Info", 5)
+                .column("  ")
+                .column("^P", 2, [clc.inverse])
+                .column(" Pause", 6)
+                .fill()
+                .store();
+        }
+    })();
+
+    return footerBuffer ;
+};
+
+let addFocus = function(){
+    process.stdout.write(clc.move.to(0, this.cursorPosition+2));
+    process.stdout.write("->");
+    process.stdout.write(clc.move.left(2));
+};
+
+let clearFocus = function(){
+    process.stdout.write(clc.move.to(2, this.cursorPosition+2));
+    process.stdout.write(clc.erase.lineLeft);
+    process.stdout.write("  ");
+    process.stdout.write(clc.move.left(2));
+};
+
+let jumpToNextTorrent = function(moveToIndex){
+    if(this.cursorPosition + moveToIndex < outputBuffer.lines.length-2 && this.cursorPosition + moveToIndex >= 0){
+        clearFocus.call(this);
+        cursorPosition += moveToIndex;
+        addFocus.call(this);
+    }
 };
 
 let addTorrentLine = function(torrentLine){
@@ -79,28 +192,68 @@ let removeTorrentLine = function(torrentIndex){
 
 };
 
-let clearFocus = function(){
-    process.stdout.write(clc.move.to(2, cursorPosition+2));
-    process.stdout.write(clc.erase.lineLeft);
-    process.stdout.write("  ");
-    process.stdout.write(clc.move.left(2));
-};
+let keypressListenerCallBack = function(ch, key){
+    if(key){
+        //console.log('got "keypress"', key);
+        switch(key.name){
+            case 'up' :
+                if(this.mode == ESCAPE_MODE){
+                    this.mode = FOCUS_MODE ;
+                    addFocus.call(this) ;
+                } else {
+                    jumpToNextTorrent.call(this, -1);
+                }
+                break ;
+            case 'down' :
+                if(this.mode == ESCAPE_MODE){
+                    this.mode = FOCUS_MODE ;
+                    addFocus.call(this) ;
+                } else {
+                    jumpToNextTorrent.call(this, +1);
+                }
+                break ;
+            case 'escape' :
+                if(this.mode == FOCUS_MODE) {
+                    this.mode = ESCAPE_MODE ;
+                    clearFocus.call(this);
+                    process.stdout.write(clc.move.to(0, 2));
+                }
+                break ;
+            case 'return' :
+                break ;
+            case 'c' :
+                if (key.ctrl){
+                    process.exit();
+                }
+                break ;
+            case 'n' :
+                if(key.ctrl){
+                    process.stdout.write(clc.reset);
+                    let dataEventListener = process.stdin.listeners('data');
+                    console.log(dataEventListener)
+                    let keyPressEventListener = process.stdin.listeners('keypress');
+                    if (dataEventListener.length > 0 && PROCESS_STDIN_EVENT_LOCKED){
+                        console.log("Removing data listener");
+                        process.stdin.removeAllListeners('data');
+                        PROCESS_STDIN_EVENT_LOCKED = false
+                    }
 
-let addFocus = function(){
-    process.stdout.write(clc.move.to(0, cursorPosition+2));
-    process.stdout.write("->");
-    process.stdout.write(clc.move.left(2));
-};
-
-let jumpToNextTorrent = function(moveToIndex){
-   if(cursorPosition + moveToIndex < outputBuffer.lines.length-2 && cursorPosition + moveToIndex >= 0){
-       clearFocus();
-       cursorPosition += moveToIndex;
-       addFocus();
-   }
+                    if(keyPressEventListener.length > 1){
+                        let firstKeyPressEventListener = keyPressEventListener[0];
+                        console.log("Removing keypress listener");
+                        process.stdin.removeAllListeners('keypress');
+                        process.stdin.on('keypress', firstKeyPressEventListener);
+                    }
+                    createNewTorrentWizard.call(this);
+                }
+                break ;
+        }
+    }
 };
 
 let createNewTorrentWizard = function(){
+    let self = this ;
+
     let questions = [
         {
             name: 'announce',
@@ -155,80 +308,15 @@ let createNewTorrentWizard = function(){
             }]).then(function(savePath){
                 let encoded = new Encode(torrentDict, "UTF-8", savePath["savepath"]);
                 let torrent = new Torrent(torrentDict, answers["filepath"]);
-                torrents.push(torrent);
-                //console.log(torrents);
+                self.torrents.push(torrent);
                 torrent.on('verified', function(completed){
-                    drawInterface();
-                    process.stdin.setRawMode(true);
-                    process.stdin.resume();
+                    let torrentLine = new TorrentLine(torrent);
+                    self.content.push(torrentLine);
+                    console.log(self.drawInterface);
+                    self.drawInterface();
                 });
             });
         })
     });
 
 };
-
-let keypressListenerCallBack = function(ch, key){
-    if(key){
-        //console.log('got "keypress"', key);
-        switch(key.name){
-            case 'up' :
-                if(mode == ESCAPE_MODE){
-                    mode = FOCUS_MODE ;
-                    addFocus() ;
-                } else {
-                    jumpToNextTorrent(-1);
-                }
-                break ;
-            case 'down' :
-                if(mode == ESCAPE_MODE){
-                    mode = FOCUS_MODE ;
-                    addFocus() ;
-                } else {
-                    jumpToNextTorrent(+1);
-                }
-                break ;
-            case 'escape' :
-                if(mode == FOCUS_MODE) {
-                    mode = ESCAPE_MODE;
-                    clearFocus();
-                    process.stdout.write(clc.move.to(0, 2));
-                }
-                break ;
-            case 'return' :
-                break ;
-            case 'c' :
-                if (key.ctrl){
-                    process.stdin.pause() ;
-                    process.stdout.write(clc.reset);
-                }
-                break ;
-            case 'n' :
-                if(key.ctrl){
-                    process.stdout.write(clc.reset);
-                    let dataEventListener = process.stdin.listeners('data');
-                    let keyPressEventListener = process.stdin.listeners('keypress');
-                    if (dataEventListener.length > 0 && PROCESS_STDIN_EVENT_LOCKED){
-                        console.log("Removing data listener");
-                        process.stdin.removeAllListeners('data');
-                        PROCESS_STDIN_EVENT_LOCKED = false
-                    }
-
-                    if(keyPressEventListener.length > 1){
-                        let firstKeyPressEventListener = keyPressEventListener[0];
-                        console.log("Removing keypress listener");
-                        process.stdin.removeAllListeners('keypress');
-                        process.stdin.on('keypress', firstKeyPressEventListener);
-                    }
-                    createNewTorrentWizard();
-                }
-                break ;
-        }
-    }
-
-
-} ;
-
-drawInterface();
-
-module.exports.drawInterface = drawInterface();
