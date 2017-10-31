@@ -153,7 +153,7 @@ let createNewTorrentWizard = function(){
                     }
                 }
             }]).then(function(savePath){
-                Encode(torrentDict, "UTF-8", savePath["savepath"]);
+                let encoded = new Encode(torrentDict, "UTF-8", savePath["savepath"]);
                 let torrent = new Torrent(torrentDict, answers["filepath"]);
                 torrents.push(torrent);
                 //console.log(torrents);

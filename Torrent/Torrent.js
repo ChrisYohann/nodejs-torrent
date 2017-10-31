@@ -79,6 +79,12 @@ Torrent.prototype.start = function(){
     }
 };
 
+Torrent.prototype.seekForPeers = function(){
+	let nbPeersToAdd = MAX_ACTIVE_PEERS - this.activePeers.size();
+
+
+};
+
 Torrent.prototype.getInfoHash = function(callback){
     let self = this ;
     let infoDictionary = this._metaData["info"];
