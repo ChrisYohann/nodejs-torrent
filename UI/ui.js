@@ -179,7 +179,7 @@ let clearFocus = function(){
 };
 
 let jumpToNextTorrent = function(moveToIndex){
-    if(this.cursorPosition + moveToIndex < outputBuffer.lines.length-2 && this.cursorPosition + moveToIndex >= 0){
+    if(this.cursorPosition + moveToIndex < this.torrents.size + 2 && this.cursorPosition + moveToIndex >= 0){
         clearFocus.call(this);
         cursorPosition += moveToIndex;
         addFocus.call(this);
