@@ -46,11 +46,13 @@ UI.prototype.drawInterface = function(){
     content.output();
     footer.output();
 
-    process.stdout.write(clc.move.to(0, 2));
     keypress(process.stdin);
-    process.stdin.on('keypress', keypressListenerCallBack.bind(this));
+
+    process.stdout.write(clc.move.to(0, 2));
     process.stdin.setRawMode(true);
     process.stdin.resume();
+    process.stdin.setEncoding("utf8");
+    process.stdin.on('keypress', keypressListenerCallBack.bind(this));
 };
 
 UI.prototype.setListeners = function(){
@@ -177,7 +179,7 @@ let clearFocus = function(){
 };
 
 let jumpToNextTorrent = function(moveToIndex){
-    if(this.cursorPosition + moveToIndex < outputBuffer.lines.length-2 && this.cursorPosition + moveToIndex >= 0){
+    if(this.cursorPosition + moveToIndex < this.torrents.size + 2 && this.cursorPosition + moveToIndex >= 0){
         clearFocus.call(this);
         cursorPosition += moveToIndex;
         addFocus.call(this);
@@ -223,27 +225,15 @@ let keypressListenerCallBack = function(ch, key){
                 break ;
             case 'c' :
                 if (key.ctrl){
+                    process.stdout.write(clc.reset);
                     process.exit();
                 }
                 break ;
             case 'n' :
                 if(key.ctrl){
                     process.stdout.write(clc.reset);
-                    let dataEventListener = process.stdin.listeners('data');
-                    console.log(dataEventListener)
-                    let keyPressEventListener = process.stdin.listeners('keypress');
-                    if (dataEventListener.length > 0 && PROCESS_STDIN_EVENT_LOCKED){
-                        console.log("Removing data listener");
-                        process.stdin.removeAllListeners('data');
-                        PROCESS_STDIN_EVENT_LOCKED = false
-                    }
-
-                    if(keyPressEventListener.length > 1){
-                        let firstKeyPressEventListener = keyPressEventListener[0];
-                        console.log("Removing keypress listener");
-                        process.stdin.removeAllListeners('keypress');
-                        process.stdin.on('keypress', firstKeyPressEventListener);
-                    }
+                    process.stdin.removeAllListeners('data');
+                    process.stdin.removeAllListeners('keypress');
                     createNewTorrentWizard.call(this);
                 }
                 break ;
@@ -312,7 +302,8 @@ let createNewTorrentWizard = function(){
                 torrent.on('verified', function(completed){
                     let torrentLine = new TorrentLine(torrent);
                     self.content.push(torrentLine);
-                    console.log(self.drawInterface);
+                    console.log(self);
+                    console.log("COMPLETED");
                     self.drawInterface();
                 });
             });
@@ -320,3 +311,7 @@ let createNewTorrentWizard = function(){
     });
 
 };
+
+
+let gui = new UI();
+gui.drawInterface();
