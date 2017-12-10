@@ -15,7 +15,7 @@ let TorrentLine = module.exports = function(torrent){
     EventEmitter.call(this);
     this.torrent = torrent;
     this.content = this.updateLineContent();
-    this.torrent.on("change", function(torrent){
+    this.torrent.torrent.on("change", function(torrent){
         self.content = self.updateLineContent();
         self.emit("torrentChange", self.content);
     });
@@ -26,10 +26,11 @@ let TorrentLine = module.exports = function(torrent){
 util.inherits(TorrentLine, EventEmitter);
 
 TorrentLine.prototype.updateLineContent = function(){
+   let torrent_infos = this.torrent.torrent;
    let result = new Line()
         .padding(4)
-        .column(this.torrent["name"], Math.ceil(0.25*NB_COLUMNS))
-        .column(new Progress(Math.ceil(0.20*NB_COLUMNS)).update(this.torrent["_completed"], this.torrent["_size"]))
+        .column(torrent_infos["name"], Math.ceil(0.25*NB_COLUMNS))
+        .column(new Progress(Math.ceil(0.20*NB_COLUMNS)).update(torrent_infos["_completed"], torrent_infos["_size"]))
         .column('Speed', Math.ceil(0.15*NB_COLUMNS))
         .column('0', Math.ceil(0.15*NB_COLUMNS))
         .fill();

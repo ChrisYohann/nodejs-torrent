@@ -32,13 +32,13 @@ let Encode = module.exports = function (data,encoding,output){
     } else {
       this.wstream = output
     }
-
     this.encode_dictionary(this.data);
     this.wstream.end(function (){
-      if(output != "undefined"){
+      if(typeof output == 'string'){
         logger.info(self.wstream.bytesWritten+" bytes written at "+self.wstream.path);
       }
     })
+
 };
 
 Encode.prototype.encode_dictionary = function(data){

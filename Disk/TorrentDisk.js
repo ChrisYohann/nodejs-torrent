@@ -27,7 +27,6 @@ const TorrentDisk = module.exports = function TorrentDisk(metaFile, filepath) {
     this.mode = ("files" in metaFile["info"]) ? multipleFiles : singleFile;
     this.totalSize = computeTotalSize.call(this);
     this.initPieces();
-    this.verify();
 };
 
 util.inherits(TorrentDisk, EventEmitter);

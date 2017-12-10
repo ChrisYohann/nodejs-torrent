@@ -18,18 +18,17 @@ const MAX_ACTIVE_PEERS = 5 ;
 let Torrent = module.exports = function Torrent(metaFile, filepath) {
     let self = this;
     EventEmitter.call(this);
-    if (typeof metaFile === "string") {
-        let metaFile = new Decode(metaFile);
-    }
+    let metaData = typeof metaFile === "string" ? new Decode(metaFile) : metaFile;
 
     //metaFile fields
-    this.name = metaFile["info"]["name"];
-    this._metaData = metaFile;
-    this._mainTracker = metaFile["announce"];
-    this.trackerList = ("announce-list" in metaFile) ? metaFile["announce-list"] : null;
+    this.name = metaData["info"]["name"].toString();
+    this._metaData = metaData;
+    this._mainTracker = metaData["announce"].toString();
+    this.trackerList = ("announce-list" in metaData) ? metaData["announce-list"] : null;
 
     //File fields
-    this._torrentDisk = new TorrentDisk(metaFile, filepath);
+    this._torrentDisk = new TorrentDisk(metaData, filepath);
+    // Events
     this._uploaded = this["_torrentDisk"]["uploaded"];
     this._downloaded = this["_torrentDisk"]["downloaded"];
     this._completed = this["_torrentDisk"]["completed"];
@@ -50,13 +49,13 @@ let Torrent = module.exports = function Torrent(metaFile, filepath) {
             return Array(this["_mainTracker"]);
         }
     })();
-
-    // Events
     this._torrentDisk.on('verified', function (completed) {
         self._completed = completed;
         self._left = self._size - self._completed;
         self.emit('verified', completed)
-    })
+    });
+    this._torrentDisk.verify();
+
 };
 
 util.inherits(Torrent, EventEmitter);
@@ -92,7 +91,7 @@ Torrent.prototype.getInfoHash = function(callback){
         initialSize: (1024 * 1024),
         incrementAmount: (100 * 1024)
     });
-    myWritableStreamBuffer.on("end", function(){
+    myWritableStreamBuffer.on("finish", function(){
         let bytesWritten = myWritableStreamBuffer.bytesWritten;
         let infoHashEncoded = myWritableStreamBuffer.getContents().slice(0, bytesWritten);
         const sha1_hash = crypto.createHash("sha1");

@@ -1,3 +1,4 @@
+const process =  require('process');
 const fs = require('fs');
 const CLI = require('clui');
 const clc = require('cli-color');
@@ -14,11 +15,7 @@ const NB_ROWS = process.stdout.rows || 24 ;
 const FOCUS_MODE = "focus" ;
 const ESCAPE_MODE = "escape" ;
 const CREATE_MODE = "create" ;
-
-let mode = ESCAPE_MODE ;
 let PROCESS_STDIN_EVENT_LOCKED = true;
-let cursorPosition = 0 ;
-let lastTorrentPosition = 2 ;
 
 let Line = CLI.Line;
 let LineBuffer = CLI.LineBuffer;
@@ -27,15 +24,14 @@ let Progress = CLI.Progress;
 let UI = module.exports = function(app){
     this.mode = ESCAPE_MODE ;
     this.cursorPosition = 0 ;
-    this.lastTorrentPosition = 2 ;
-    this.torrents = [];
+    this.torrents = app["torrents"] || [];
     this.content = [];
 
     initContent.call(this);
 };
 
 UI.prototype.drawInterface = function(){
-    console.log("DRAW INTERFACE")
+    this.cursorPosition = 0 ;
     process.stdout.write(clc.reset);
 
     let header = drawHeader();
@@ -55,16 +51,12 @@ UI.prototype.drawInterface = function(){
     process.stdin.on('keypress', keypressListenerCallBack.bind(this));
 };
 
-UI.prototype.setListeners = function(){
-
-};
-
 let initContent = function(){
     let self = this ;
     this.torrents.forEach(function(torrent, index){
         let torrentline = new TorrentLine(torrent);
-        torrentline.on("torrentChange", torrentChangeCallback(torrent));
-        this.content.push(torrentline);
+        torrentline.on("torrentChange", function(){console.log("YEAH")});
+        self.content.push(torrentline);
     })
 };
 
@@ -101,7 +93,6 @@ let drawHeader = function(){
 };
 
 let drawContent = function(){
-    console.log("Drawing Content");
     let contentBuffer = new LineBuffer({
         x: 0,
         y: 2,
@@ -112,18 +103,20 @@ let drawContent = function(){
     if(this.content.length > 0){
         this.content.forEach(function(torrentLine){
             contentBuffer.addLine(torrentLine.content);
-            this.lastTorrentPosition += 1 ;
         });
     } else {
         contentBuffer.addLine(new Line()
             .column(" ", 1)
             .fill());
     }
-
     return contentBuffer ;
 };
 
 let drawFooter = function(){
+    //Clean Footer if previous mode was enabled
+    process.stdout.write(clc.move.to(0, NB_ROWS - 2));
+    process.stdout.write(clc.erase.line);
+
     let self = this;
     let footerBuffer = new LineBuffer({
         x: 0,
@@ -179,28 +172,21 @@ let clearFocus = function(){
 };
 
 let jumpToNextTorrent = function(moveToIndex){
-    if(this.cursorPosition + moveToIndex < this.torrents.size + 2 && this.cursorPosition + moveToIndex >= 0){
+    if(this.cursorPosition + moveToIndex < this.torrents.length && this.cursorPosition + moveToIndex >= 0){
         clearFocus.call(this);
-        cursorPosition += moveToIndex;
+        this.cursorPosition += moveToIndex;
         addFocus.call(this);
     }
 };
 
-let addTorrentLine = function(torrentLine){
-
-};
-
-let removeTorrentLine = function(torrentIndex){
-
-};
-
 let keypressListenerCallBack = function(ch, key){
-    if(key){
+    if(key && this.mode != CREATE_MODE){
         //console.log('got "keypress"', key);
         switch(key.name){
             case 'up' :
                 if(this.mode == ESCAPE_MODE){
                     this.mode = FOCUS_MODE ;
+                    drawFooter.call(this).output();
                     addFocus.call(this) ;
                 } else {
                     jumpToNextTorrent.call(this, -1);
@@ -209,6 +195,7 @@ let keypressListenerCallBack = function(ch, key){
             case 'down' :
                 if(this.mode == ESCAPE_MODE){
                     this.mode = FOCUS_MODE ;
+                    drawFooter.call(this).output();
                     addFocus.call(this) ;
                 } else {
                     jumpToNextTorrent.call(this, +1);
@@ -217,6 +204,7 @@ let keypressListenerCallBack = function(ch, key){
             case 'escape' :
                 if(this.mode == FOCUS_MODE) {
                     this.mode = ESCAPE_MODE ;
+                    drawFooter.call(this).output();
                     clearFocus.call(this);
                     process.stdout.write(clc.move.to(0, 2));
                 }
@@ -232,8 +220,20 @@ let keypressListenerCallBack = function(ch, key){
             case 'n' :
                 if(key.ctrl){
                     process.stdout.write(clc.reset);
-                    process.stdin.removeAllListeners('data');
-                    process.stdin.removeAllListeners('keypress');
+                    this.mode = CREATE_MODE ;
+                    let dataEventListener = process.stdin.listeners('data');
+                    let keyPressEventListener = process.stdin.listeners('keypress');
+                        if (dataEventListener.length > 0 && PROCESS_STDIN_EVENT_LOCKED) {
+                            console.log("Removing data listener");
+                            process.stdin.removeAllListeners('data');
+                            PROCESS_STDIN_EVENT_LOCKED = false;
+                        }
+                        if(keyPressEventListener.length > 1){
+                            let firstKeyPressEventListener = keyPressEventListener[0];
+                            console.log("Removing keypress listener");
+                            process.stdin.removeAllListeners('keypress');
+                            process.stdin.on('keypress', firstKeyPressEventListener);
+                        }
                     createNewTorrentWizard.call(this);
                 }
                 break ;
@@ -302,8 +302,7 @@ let createNewTorrentWizard = function(){
                 torrent.on('verified', function(completed){
                     let torrentLine = new TorrentLine(torrent);
                     self.content.push(torrentLine);
-                    console.log(self);
-                    console.log("COMPLETED");
+                    self.mode = ESCAPE_MODE ;
                     self.drawInterface();
                 });
             });
@@ -311,7 +310,3 @@ let createNewTorrentWizard = function(){
     });
 
 };
-
-
-let gui = new UI();
-gui.drawInterface();
