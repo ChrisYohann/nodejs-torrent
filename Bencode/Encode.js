@@ -78,7 +78,7 @@ Encode.prototype.encode_list = function(data){
       this.encode_dictionary(element);
     }
   }, this);
-  this.wstream.write("e")
+  this.wstream.write("e");
 };
 
 Encode.prototype.encode_string = function(data){
