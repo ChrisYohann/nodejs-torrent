@@ -141,7 +141,7 @@ let convertBencodeListForTorrent = function(bencodedList, keysToExclude){
     return _.map(bencodedList, function(element){
         let isABuffer = Buffer.isBuffer(element);
         let isAList = Array.isArray(element);
-        let isADict = !isABuffer & (typeof element === "object");
+        let isADict = !isABuffer & !isAList & (typeof element === "object");
         if (isAList){
             return convertBencodeListForTorrent(element, keysToExclude);
         } else if(isABuffer){
