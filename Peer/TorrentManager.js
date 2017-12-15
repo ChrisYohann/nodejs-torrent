@@ -23,6 +23,7 @@ TorrentManager.prototype.loadTorrents = function(confFile){
         })
     } else {
         logger.info("No configuration file found")
+        self.emit("loadingComplete", [])
     }
 };
 
