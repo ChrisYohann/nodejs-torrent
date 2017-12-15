@@ -3,6 +3,7 @@ let fs = require('fs');
 let EventEmitter = require('events').EventEmitter;
 let util = require('util');
 let Torrent = require("../Torrent/Torrent");
+let CreateTorrent = require('../newTorrent');
 
 let TorrentManager = module.exports = function TorrentManager(port){
     EventEmitter.call(this);
@@ -25,6 +26,41 @@ TorrentManager.prototype.loadTorrents = function(confFile){
         logger.info("No configuration file found")
         self.emit("loadingComplete", [])
     }
+};
+
+TorrentManager.prototype.addNewTorrent = function(torrent_form){
+  let self = this;
+  CreateTorrent(torrent_form, function(torrentDict){
+      inquirer.prompt([{name : 'savepath',
+          type: 'input',
+          'message' : "Where do you want to save the file ?",
+          validate : function(value){
+              if(value){
+                  return true ;
+              } else {
+                  return "Please Enter a valid SavePath"
+              }
+          }
+      }]).then(function(savePath){
+          let encoded = new Encode(torrentDict, "UTF-8", savePath["savepath"]);
+          let torrent = new Torrent(torrentDict, torrent_form["filepath"]);
+          self.torrents.push(torrent);
+          torrent.on('verified', function(completed){
+              let torrentLine = new TorrentLine(torrent);
+              self.content.push(torrentLine);
+              self.mode = ESCAPE_MODE ;
+              self.drawInterface();
+          });
+      });
+  });
+};
+
+TorrentManager.prototype.openTorrent = function(torrent_path){
+
+};
+
+TorrentManager.prototype.deleteTorrent = function(torrent){
+
 };
 
 let parseTorrentCallback = function(torrentManager, jsonTorrentsData){

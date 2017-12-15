@@ -54,9 +54,12 @@ App.prototype.loadUI = function(){
     this.ui.drawInterface();
 };
 
+let newTorrentListener = function(torrent_form){
+
+};
+
 
 let app = new App();
 getPort.call(app, function(){
     app.start();
 });
-
