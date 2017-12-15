@@ -2,6 +2,7 @@ const TorrentDisk = require("../Disk/TorrentDisk");
 const Decode = require("../Bencode/Decode");
 const Encode = require("../Bencode/Encode");
 const logger = require("../log");
+const _ = require("underscore");
 
 const HTTPTracker = require("../Tracker/HTTPTracker");
 const UDPTracker = require("../Tracker/UDPTracker");
@@ -18,7 +19,8 @@ const MAX_ACTIVE_PEERS = 5 ;
 let Torrent = module.exports = function Torrent(metaFile, filepath) {
     let self = this;
     EventEmitter.call(this);
-    let metaData = typeof metaFile === "string" ? new Decode(metaFile) : metaFile;
+    let metaData_tmp = typeof metaFile === "string" ? new Decode(metaFile) : metaFile;
+    let metaData = convertBencodeDictForTorrent(metaData_tmp, ["pieces"]);
 
     //metaFile fields
     this.name = metaData["info"]["name"].toString();
@@ -114,4 +116,40 @@ let getHTTPorUDPTracker = function(trackerURL){
     } else {
         logger.error("No valid Protocol for ${trackerURL} found. Aborting.");
     }
-}
+};
+
+let convertBencodeDictForTorrent = function(bencodedDict, keysToExclude){
+    const keySet = bencodedDict.getContent();
+    keySet.sort();
+    keySet.forEach(function(key, index, array){
+        let isABuffer = Buffer.isBuffer(bencodedDict[key]);
+        let isAList = Array.isArray(bencodedDict[key]);
+        let isADict = !isABuffer & !isAList & (typeof bencodedDict[key] === "object");
+        if (isABuffer && !keysToExclude.includes(key)){
+            bencodedDict[key] = bencodedDict[key].toString();
+        } else if (isAList){
+            bencodedDict[key] = convertBencodeListForTorrent(bencodedDict[key], keysToExclude);
+        } else if (isADict) {
+            bencodedDict[key] = convertBencodeDictForTorrent(bencodedDict[key], keysToExclude);
+        }
+    });
+
+    return bencodedDict ;
+};
+
+let convertBencodeListForTorrent = function(bencodedList, keysToExclude){
+    return _.map(bencodedList, function(element){
+        let isABuffer = Buffer.isBuffer(element);
+        let isAList = Array.isArray(element);
+        let isADict = !isABuffer & !isAList & (typeof element === "object");
+        if (isAList){
+            return convertBencodeListForTorrent(element, keysToExclude);
+        } else if(isABuffer){
+            return element.toString();
+        } else if (isADict){
+            return convertBencodeDictForTorrent(element, keysToExclude);
+        } else {
+            return element;
+        }
+    });
+};

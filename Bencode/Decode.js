@@ -115,7 +115,6 @@ Decode.decode_string = function(string_length){
     const string_length_toInt = parseInt(string_length);
     const string_asbytes = Decode.data.slice(Decode.position, Decode.position + string_length_toInt);
     Decode.position += string_length_toInt;
-  //console.log(string_asbytes.toString('ascii'))
   return string_asbytes
 };
 
