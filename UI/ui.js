@@ -273,7 +273,6 @@ let createNewTorrentWizard = function(){
             message: 'Filepath',
             validate: function(value){
                 try {
-                    //noinspection JSUnusedLocalSymbols
                     let stats = fs.statSync(value);
                     return true ;
                 }
@@ -281,20 +280,25 @@ let createNewTorrentWizard = function(){
                     return "Please enter a valid Filepath" ;
                 }
             }
+        },
+        {
+          name: 'torrent_filepath',
+          type: 'input',
+          message: 'Path where you want to the .torrent File',
+          validate : function(value){
+              if(value){
+                  return true ;
+              } else {
+                  return "Please Enter a valid SavePath"
+              }
+          }
         }
-    ] ;
+      ];
     inquirer.prompt(questions).then(function(answers){
         CreateTorrent(answers, function(torrentDict){
             inquirer.prompt([{name : 'savepath',
                 type: 'input',
-                'message' : "Where do you want to save the file ?",
-                validate : function(value){
-                    if(value){
-                        return true ;
-                    } else {
-                        return "Please Enter a valid SavePath"
-                    }
-                }
+
             }]).then(function(savePath){
                 let encoded = new Encode(torrentDict, "UTF-8", savePath["savepath"]);
                 let torrent = new Torrent(torrentDict, answers["filepath"]);
