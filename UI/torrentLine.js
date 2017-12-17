@@ -11,6 +11,7 @@ let Progress = CLI.Progress;
 
 let TorrentLine = module.exports = function(torrent){
     console.log("Creating TorrentLine");
+    console.log(torrent);
     let self = this ;
     EventEmitter.call(this);
     this.torrent = torrent;

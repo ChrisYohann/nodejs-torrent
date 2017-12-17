@@ -48,8 +48,20 @@ TorrentManager.prototype.addNewTorrent = function(torrentForm){
   });
 };
 
-TorrentManager.prototype.openTorrent = function(torrent_path){
-
+TorrentManager.prototype.openTorrent = function(torrentForm){
+  let self = this;
+  let torrent = new Torrent(torrentForm["torrent_filepath"], torrentForm["filepath"]);
+  let callbackInfoHash = function(digest){
+      torrent.listeningPort = self.listeningPort ;
+      let obj = {} ;
+      obj["torrent"] = torrent ;
+      obj["infoHash"] = digest ;
+      self.torrents.push(obj);
+      self.emit("newTorrentAdded", obj);
+  };
+  torrent.on("verified", function(completed){
+      torrent.getInfoHash(callbackInfoHash) ;
+  });
 };
 
 TorrentManager.prototype.deleteTorrent = function(torrent){

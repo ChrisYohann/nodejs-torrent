@@ -52,6 +52,7 @@ let Torrent = module.exports = function Torrent(metaFile, filepath) {
         }
     })();
     this._torrentDisk.on('verified', function (completed) {
+        logger.debug(`${self.name} torrent verified. ${completed} bytes downloaded.`);
         self._completed = completed;
         self._left = self._size - self._completed;
         self.emit('verified', completed)

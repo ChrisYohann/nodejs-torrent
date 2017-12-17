@@ -116,7 +116,7 @@ TorrentDisk.prototype.verify = function(){
          }
          return 0;
      }).catch(function (error) {
-         logger.error(error)
+         logger.error(`Unable to check SHA1 fingerprint for pieces. Error : ${error}`)
      });
      promises.push(promise)
  });

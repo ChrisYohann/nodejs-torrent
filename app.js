@@ -67,6 +67,11 @@ let newTorrentFromUIListener = function(torrentForm){
   self.torrentManager.addNewTorrent(torrentForm);
 };
 
+let openTorrentFromUIListener = function(torrentForm){
+  let self = this;
+  self.torrentManager.openTorrent(torrentForm);
+}
+
 let newTorrentFromManagerListener = function(torrentObj){
   let self = this;
   self.emit("newTorrent", torrentObj);
@@ -80,6 +85,7 @@ let initTorrentManagerListeners = function(){
 let initUIListeners = function(){
   let self = this;
   self.ui.on("newTorrentSubmitted", newTorrentFromUIListener.bind(self));
+  self.ui.on("openTorrentSubmitted", openTorrentFromUIListener.bind(self));
 };
 
 

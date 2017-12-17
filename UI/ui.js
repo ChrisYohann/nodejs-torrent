@@ -11,7 +11,8 @@ let inquirer = require('inquirer') ;
 let CreateTorrent = require('../newTorrent');
 let Torrent = require('../Torrent/Torrent');
 let TorrentLine = require('./torrentLine');
-let Encode = require('../Bencode/Encode.js');
+let Encode = require('../Bencode/Encode');
+let Decode = require('../Bencode/Decode');
 
 const NB_COLUMNS = process.stdout.columns || 80 ;
 const NB_ROWS = process.stdout.rows || 24 ;
@@ -259,6 +260,21 @@ let keypressListenerCallBack = function(ch, key){
                     createNewTorrentWizard.call(this);
                 }
                 break ;
+            case 'o' :
+                  if(key.ctrl){
+                    process.stdout.write(clc.reset);
+                    this.mode = CREATE_MODE;
+                    let dataEventListener = process.stdin.listeners('data');
+                    let keyPressEventListener = process.stdin.listeners('keypress');
+                    logger.debug(`Data Event Listeners : ${dataEventListener.length} | Keypress Event Listeners ${keyPressEventListener.length}`);
+                        if (PROCESS_STDIN_EVENT_LOCKED){
+                            logger.debug("Removing data listener");
+                            process.stdin.removeAllListeners('data');
+                            PROCESS_STDIN_EVENT_LOCKED = false;
+                        }
+                    process.stdin.removeAllListeners('keypress');
+                    openTorrentWizard.call(this);
+                  }
         }
     }
 };
@@ -321,3 +337,37 @@ let createNewTorrentWizard = function(){
     });
 
 };
+
+let openTorrentWizard = function(){
+  let self = this;
+  let questions = [
+    {
+      name : 'torrent_filepath',
+      type : 'input',
+      message : 'Path where the .torrent File is saved',
+      validate : function(value){
+        if(value){
+          return true;
+        } else {
+          return "Please Enter a valid FilePath" ;
+        }
+      }
+    },
+    {
+      name : 'filepath',
+      type : 'input',
+      message : 'Path where you want to save the File',
+      validate : function(value){
+        if(value){
+          return true;
+        } else {
+          return "Please Enter a valid FilePath" ;
+        }
+      }
+    }
+  ]
+
+  inquirer.prompt(questions).then(function(answers){
+    self.emit("openTorrentSubmitted", answers);
+  });
+}
