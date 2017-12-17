@@ -101,7 +101,7 @@ UDPTracker.prototype.makeUDPAnnounceRequest = function(torrentEvent){
     requestMessage.writeInt32BE(-1, 92);
     requestMessage.writeInt16BE(6970, 96);
 
-    logger.debug(requestMessage);
+    logger.silly(requestMessage);
 
     if(this.trackerAddress && this.trackerPort){
       this.server.send(requestMessage, 0, 98, this.trackerPort, this.trackerAddress, function(error){

@@ -6,15 +6,18 @@ let loggingColors = { error: 'red', warn: 'yellow', info: 'green', verbose: 'blu
 
 let logger = new (winston.Logger)({
     transports : [
-        new (winston.transports.Console)({
+        new (winston.transports.File)({
+            filename :  "./logs/output.log",
             timestamp : function(){
                 return dateformat(Date.now(), "yyyy/mm/dd HH:MM:ss.l")
             },
             formatter: function(options) {
-                return `[${colors[loggingColors[options.level]]["bold"](options.level.toUpperCase())}] ${options.timestamp()} ${(options.message ? options.message : '')} 
-                    ${(options.meta && Object.keys(options.meta).length ? '\n\t' + JSON.stringify(options.meta) : '' )}` ;
+                //${colors[loggingColors[options.level]]["bold"](options.level.toUpperCase())}
+                return `[${options.level.toUpperCase()}] ${options.timestamp()} ${(options.message ? options.message : '')}`;
+                    //${(options.meta && Object.keys(options.meta).length ? '\n\t' + JSON.stringify(options.meta) : '' )}` ;
             },
-            colorize : true
+            colorize : false,
+            json : false
         })
     ],
     colors : loggingColors,
@@ -22,5 +25,3 @@ let logger = new (winston.Logger)({
 });
 
 module.exports = logger;
-//logger.log("debug", "SALUT")
-

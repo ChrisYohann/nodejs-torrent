@@ -3,6 +3,10 @@ const fs = require('fs');
 const CLI = require('clui');
 const clc = require('cli-color');
 const keypress = require('keypress') ;
+const util = require("util");
+const EventEmitter = require("events");
+
+let logger = require("../log");
 let inquirer = require('inquirer') ;
 let CreateTorrent = require('../newTorrent');
 let Torrent = require('../Torrent/Torrent');
@@ -15,20 +19,25 @@ const NB_ROWS = process.stdout.rows || 24 ;
 const FOCUS_MODE = "focus" ;
 const ESCAPE_MODE = "escape" ;
 const CREATE_MODE = "create" ;
-let PROCESS_STDIN_EVENT_LOCKED = true;
+let PROCESS_STDIN_EVENT_LOCKED = true; //For some reasons, this event appears only once.
 
 let Line = CLI.Line;
 let LineBuffer = CLI.LineBuffer;
 let Progress = CLI.Progress;
 
 let UI = module.exports = function(app){
+    EventEmitter.call(this);
+    this.app = app;
     this.mode = ESCAPE_MODE ;
     this.cursorPosition = 0 ;
     this.torrents = app["torrents"] || [];
     this.content = [];
 
     initContent.call(this);
+    initAppListeners.call(this);
 };
+
+util.inherits(UI, EventEmitter);
 
 UI.prototype.drawInterface = function(){
     this.cursorPosition = 0 ;
@@ -49,6 +58,20 @@ UI.prototype.drawInterface = function(){
     process.stdin.resume();
     process.stdin.setEncoding("utf8");
     process.stdin.on('keypress', keypressListenerCallBack.bind(this));
+};
+
+let newTorrentFromAppListener = function(torrentObj){
+  let self = this;
+  let torrentline = new TorrentLine(torrentObj);
+  torrentline.on("torrentChange", function(){console.log("YEAH")});
+  self.content.push(torrentline);
+  self.mode = ESCAPE_MODE;
+  self.drawInterface();
+};
+
+let initAppListeners = function(){
+  let self = this;
+  self.app.on("newTorrent", newTorrentFromAppListener.bind(self));
 };
 
 let initContent = function(){
@@ -159,29 +182,32 @@ let drawFooter = function(){
 };
 
 let addFocus = function(){
-    process.stdout.write(clc.move.to(0, this.cursorPosition+2));
-    process.stdout.write("->");
-    process.stdout.write(clc.move.left(2));
+  logger.debug(`Add Focus Function Called. cursorPosition=${this.cursorPosition}`);
+  process.stdout.write(clc.move.to(0, this.cursorPosition+2));
+  process.stdout.write("->");
+  process.stdout.write(clc.move.left(2));
 };
 
 let clearFocus = function(){
-    process.stdout.write(clc.move.to(2, this.cursorPosition+2));
-    process.stdout.write(clc.erase.lineLeft);
-    process.stdout.write("  ");
-    process.stdout.write(clc.move.left(2));
+  logger.debug(`Clear Focus Function Called. cursorPosition=${this.cursorPosition}`);
+  process.stdout.write(clc.move.to(2, this.cursorPosition+2));
+  process.stdout.write(clc.erase.lineLeft);
+  process.stdout.write("  ");
+  process.stdout.write(clc.move.left(2));
 };
 
 let jumpToNextTorrent = function(moveToIndex){
-    if(this.cursorPosition + moveToIndex < this.torrents.length && this.cursorPosition + moveToIndex >= 0){
-        clearFocus.call(this);
-        this.cursorPosition += moveToIndex;
-        addFocus.call(this);
+
+  if(this.cursorPosition + moveToIndex < this.torrents.length && this.cursorPosition + moveToIndex >= 0){
+      clearFocus.call(this);
+      this.cursorPosition += moveToIndex;
+      addFocus.call(this);
     }
 };
 
 let keypressListenerCallBack = function(ch, key){
+  logger.debug(`${key.ctrl?"CTRL+":""}${key.name} pressed in ${this.mode} mode.`);
     if(key && this.mode != CREATE_MODE){
-        //console.log('got "keypress"', key);
         switch(key.name){
             case 'up' :
                 if(this.mode == ESCAPE_MODE){
@@ -223,17 +249,13 @@ let keypressListenerCallBack = function(ch, key){
                     this.mode = CREATE_MODE ;
                     let dataEventListener = process.stdin.listeners('data');
                     let keyPressEventListener = process.stdin.listeners('keypress');
-                        if (dataEventListener.length > 0 && PROCESS_STDIN_EVENT_LOCKED) {
-                            console.log("Removing data listener");
+                    logger.debug(`Data Event Listeners : ${dataEventListener.length} | Keypress Event Listeners ${keyPressEventListener.length}`);
+                        if (PROCESS_STDIN_EVENT_LOCKED){
+                            logger.debug("Removing data listener");
                             process.stdin.removeAllListeners('data');
                             PROCESS_STDIN_EVENT_LOCKED = false;
                         }
-                        if(keyPressEventListener.length > 1){
-                            let firstKeyPressEventListener = keyPressEventListener[0];
-                            console.log("Removing keypress listener");
-                            process.stdin.removeAllListeners('keypress');
-                            process.stdin.on('keypress', firstKeyPressEventListener);
-                        }
+                    process.stdin.removeAllListeners('keypress');
                     createNewTorrentWizard.call(this);
                 }
                 break ;
@@ -295,22 +317,7 @@ let createNewTorrentWizard = function(){
         }
       ];
     inquirer.prompt(questions).then(function(answers){
-        CreateTorrent(answers, function(torrentDict){
-            inquirer.prompt([{name : 'savepath',
-                type: 'input',
-
-            }]).then(function(savePath){
-                let encoded = new Encode(torrentDict, "UTF-8", savePath["savepath"]);
-                let torrent = new Torrent(torrentDict, answers["filepath"]);
-                self.torrents.push(torrent);
-                torrent.on('verified', function(completed){
-                    let torrentLine = new TorrentLine(torrent);
-                    self.content.push(torrentLine);
-                    self.mode = ESCAPE_MODE ;
-                    self.drawInterface();
-                });
-            });
-        })
+      self.emit("newTorrentSubmitted", answers);
     });
 
 };

@@ -29,19 +29,19 @@ Piece.prototype.write = function(begin, block){
       const file = filePointer.getFile();
       let bytesToWrite = blockRemaining.length;
 
-      logger.debug("Bytes to write : "+bytesToWrite);
+      logger.silly("Bytes to write : "+bytesToWrite);
 
       const bytesAvailableInCurrentFile = file.length - filePointer.getFileOffset() - newBegin;
       const bytesRemaining = bytesToWrite - bytesAvailableInCurrentFile;
-      logger.debug("Bytes Remaining : "+ bytesRemaining);
-    logger.debug("Available : "+bytesAvailableInCurrentFile);
+      logger.silly("Bytes Remaining : "+ bytesRemaining);
+    logger.silly("Available : "+bytesAvailableInCurrentFile);
     var isOverlap = bytesRemaining > 0;
     if(isOverlap)
-      logger.debug("Piece may overlapping 2 files. Bytes remaining to write : "+bytesRemaining);
+      logger.silly("Piece may overlapping 2 files. Bytes remaining to write : "+bytesRemaining);
 
       const p = new Promise(function (resolve, reject) {
           (function () {
-              logger.debug("Bytes to Write : " + bytesToWrite + " Bytes available :" + bytesAvailableInCurrentFile);
+              logger.silly("Bytes to Write : " + bytesToWrite + " Bytes available :" + bytesAvailableInCurrentFile);
               const bytesWritten = Math.min(bytesToWrite, bytesAvailableInCurrentFile);
               file.write(filePointer.getFileOffset() + newBegin,
                   blockRemaining.slice(0, bytesWritten),
@@ -91,20 +91,20 @@ Piece.prototype.read = function(begin, length){
     let filePointerIndex = getFilePointerIndex.call(this, begin);
 
     do {
-    logger.debug(filePointer);
+    logger.silly(filePointer);
     var filePointer = this["files"][filePointerIndex];
       const file = filePointer.getFile();
       const fileLength = file.opened ? file.length : filePointer.getFileLength();
 
-      logger.debug("File length : "+file.length);
-    logger.debug("Bytes to read : "+newLength);
+      logger.silly("File length : "+file.length);
+    logger.silly("Bytes to read : "+newLength);
 
       const bytesAvailableInCurrentFile = fileLength - filePointer.getFileOffset() - newBegin;
       const bytesRemaining = newLength - bytesAvailableInCurrentFile;
-      logger.debug("Bytes Remaining : "+ bytesRemaining);
+      logger.silly("Bytes Remaining : "+ bytesRemaining);
     var isOverlap = bytesRemaining > 0;
     if(isOverlap)
-      logger.debug("Piece may overlapping 2 files. Bytes remaining to read : "+bytesRemaining);
+      logger.silly("Piece may overlapping 2 files. Bytes remaining to read : "+bytesRemaining);
 
       const p = new Promise(function (resolve, reject) {
           file.read(filePointer.getFileOffset() + newBegin,
@@ -186,7 +186,7 @@ Piece.prototype.isCompleted = function(){
 Piece.prototype.checkSha1 = function(){
     const sha1Print = this.sha1;
     return this.read(0, this.length).then(function(data){
-    logger.debug("Data : "+data.toString("hex"));
+    logger.silly("MoreData : "+data.toString("hex"));
       const sha1_hash = crypto.createHash("sha1");
       sha1_hash.update(data);
       const digest = sha1_hash.digest();
