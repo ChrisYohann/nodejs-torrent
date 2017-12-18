@@ -36,13 +36,13 @@ Decode.encoding = null;
 Decode.dictionary = null;
 
 Decode.decode_dictionary = function(){
-    const bdictionary = new Dict();
-    const result = [];
-    let string_length = "";
-    while(Decode.position < Decode.data.length) {
+  const bdictionary = new Dict();
+  const result = [];
+  let string_length = "";
+  while(Decode.position < Decode.data.length) {
 
-      const character = Decode.data[Decode.position];
-      Decode.position++;
+    const character = Decode.data[Decode.position];
+    Decode.position++;
 
     if (Decode.numberisInteger(String.fromCharCode(character))) {
       string_length += String.fromCharCode(character)
@@ -98,7 +98,7 @@ Decode.decode_list = function(){
           result.push(Decode.decode_string(string_length));
           break;
         case 0x65:
-          return result
+          return result;
       }
     }
 

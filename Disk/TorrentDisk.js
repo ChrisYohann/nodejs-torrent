@@ -4,6 +4,7 @@ const Piece = require("./Piece");
 const SeekPointer = require("./SeekPointer");
 const util = require('util');
 const EventEmitter = require('events').EventEmitter;
+const mkdirp = require('mkdirp');
 let logger = require("../log");
 
 const PATH_ENV = require("path");
@@ -176,10 +177,17 @@ TorrentDisk.prototype.getCompleted = function(){
 };
 
 var initFiles = function(){
-  this.fileNamesPath.forEach(function(fileName){
-      const raf = new randomAccessFile(fileName);
-      this.files.push(raf)
-  }, this)
+  let self = this;
+  if (this.mode = multipleFiles){
+    mkdirp(self.filepath, function(err){
+      if (err) logger.error(err);
+      else logger.info(`Directory ${self.filepath} created.`);
+    })
+  }
+  this.fileNamesPath.forEach(function(fileName, fileIndex){
+      const raf = new randomAccessFile(fileName, {length : self.fileLengths[fileIndex]});
+      this.files.push(raf);
+  }, this);
 };
 
 var computeTotalSize = function(){
