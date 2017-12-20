@@ -216,7 +216,7 @@ let jumpToNextTorrent = function(moveToIndex){
 };
 
 let keypressListenerCallBack = function(ch, key){
-  logger.info(`${key.ctrl?"CTRL+":""}${key.name} pressed in ${this.mode} mode.`);
+  logger.debug(`${key.ctrl?"CTRL+":""}${key.name} pressed in ${this.mode} mode.`);
     if(key){
         switch(key.name){
             case 'up' :

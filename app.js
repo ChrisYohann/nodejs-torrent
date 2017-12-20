@@ -84,8 +84,6 @@ let newTorrentFromManagerListener = function(torrentObj){
 
 let deletedTorrentFromManagerListener = function(torrentIndex){
   let self = this;
-  logger.info("Nb Torrents : "+self.torrents.length);
-  logger.info("Nb Torrents in UI : "+self.ui.torrents.length);
   self.emit("deletedTorrent", torrentIndex);
 }
 
