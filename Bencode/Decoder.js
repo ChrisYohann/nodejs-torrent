@@ -31,8 +31,8 @@ Decoder.prototype.decode = function(data){
     })();
     let string_length = "";
     let bencodedToken = undefined;
-    while(self.position < data.length){
-      const character = data[self.position];
+    while(self.position < self.data.length){
+      const character = self.data[self.position];
       self.position++;
       if (numberisInteger(String.fromCharCode(character))) {
         string_length += String.fromCharCode(character)
@@ -55,8 +55,10 @@ Decoder.prototype.decode = function(data){
             return checkIfStreamIsFinished.call(self, bencodedToken);
             break;
           default:
-            logger.error(`Invalid Bencode Token ${character}`);
-            throw "Invalid Bencode Token" ;
+            console.log("Character" + character);
+            let message = `Invalid Bencode Token ${String.fromCharCode(character)} at position ${self.position}`;
+            logger.error(message);
+            throw message ;
         }
       }
     }
@@ -185,7 +187,7 @@ let numberisInteger = function(str){
 let checkIfStreamIsFinished = function(result){
   let self = this;
   if (self.position < self.data.length){
-    let message = "Invalid Bencode Token";
+    let message = `Invalid Bencode Token. Parser is at position ${self.position} but EOF is at position ${self.data.length}`;
     logger.error(message)
     throw message;
   } else {

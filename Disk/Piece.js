@@ -47,6 +47,7 @@ Piece.prototype.write = function(begin, block){
                   blockRemaining.slice(0, bytesWritten),
                   function (err) {
                       if (err) {
+                          logger.error("Error in Writing Piece");
                           logger.error(err);
                           reject(err);
                       } else {
@@ -76,6 +77,7 @@ Piece.prototype.write = function(begin, block){
       return a + b ;
     }, 0);
   }).catch(function(error){
+    logger.error("Global Error in Writing Pieces");
     logger.error(error)
   })
 

@@ -178,9 +178,12 @@ TorrentDisk.prototype.getCompleted = function(){
 
 var initFiles = function(){
   let self = this;
-  if (this.mode = multipleFiles){
+  if (self.mode == multipleFiles){
     mkdirp(self.filepath, function(err){
-      if (err) logger.error(err);
+      if (err){
+        logger.error(`Error in creating Directory Files for ${self["metaFile"]["info"]["name"]}`);
+        logger.error(err);
+      }
       else logger.info(`Directory ${self.filepath} created.`);
     })
   }

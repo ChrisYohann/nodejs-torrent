@@ -5,7 +5,9 @@ let logger = require("../log");
 const compact2string = require("compact2string");
 const Tracker = require("./Tracker");
 const util = require('util');
-const Decode = require("../Bencode/Decode");
+const Decoder = require("../Bencode/Decoder");
+
+let bencodeDecoder = new Decoder("utf8");
 
 const HTTPTracker = module.exports = function HTTPTracker(clientTorrent, announceURL) {
     Tracker.call(this, clientTorrent, announceURL)
@@ -42,9 +44,9 @@ HTTPTracker.prototype.announce = function(torrentEvent) {
             responseBody += chunk
         });
 
-        response.on("end", function () {
+        response.on("end", function (){
             const bufferedData = Buffer.from(responseBody);
-            const bencodedResponse = new Decode(bufferedData);
+            const bencodedResponse = bencodeDecoder.decode(bufferedData);
             if (!("failure reason" in bencodedResponse)) {
                 logger.verbose(bencodedResponse);
                 callBackTrackerResponseHTTP.call(self, bencodedResponse)

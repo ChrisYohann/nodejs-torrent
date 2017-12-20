@@ -1,5 +1,5 @@
 const TorrentDisk = require("../Disk/TorrentDisk");
-const Decode = require("../Bencode/Decode");
+const Decoder = require("../Bencode/Decoder");
 const Encode = require("../Bencode/Encode");
 const logger = require("../log");
 const _ = require("underscore");
@@ -10,6 +10,7 @@ const util = require('util');
 const EventEmitter = require('events').EventEmitter;
 const crypto = require('crypto');
 let streamBuffers = require('stream-buffers');
+let bencodeDecoder = new Decoder("utf8");
 
 const udpAddressRegex = /^(udp:\/\/[\w.-]+):(\d{2,})[^\s]*$/g;
 const httpAddressRegex = /^(http:\/\/[\w.-]+):(\d{2,})[^\s]*$/g;
@@ -19,7 +20,7 @@ const MAX_ACTIVE_PEERS = 5 ;
 let Torrent = module.exports = function Torrent(metaFile, filepath) {
     let self = this;
     EventEmitter.call(this);
-    let metaData_tmp = typeof metaFile === "string" ? new Decode(metaFile) : metaFile;
+    let metaData_tmp = typeof metaFile === "string" ? bencodeDecoder.decode(metaFile) : metaFile;
     let metaData = convertBencodeDictForTorrent(metaData_tmp, ["pieces"]);
 
     //metaFile fields

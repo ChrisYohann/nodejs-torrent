@@ -74,6 +74,7 @@ let parseTorrentCallback = function(torrentManager, jsonTorrentsData){
     jsonTorrentsData.forEach(function(element, index, array){
         let obj = {};
         if("filepath" in element && "torrent_file" in element){
+            logger.info(`Loading ${element["torrent_file"]}`);
             let torrent = new Torrent(element["torrent_file"], element["filepath"]);
             let callbackInfoHash = function(digest){
                 torrent.listeningPort = torrentManager.listeningPort ;
