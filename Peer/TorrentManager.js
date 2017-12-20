@@ -40,7 +40,7 @@ TorrentManager.prototype.addNewTorrent = function(torrentForm){
           obj["torrent"] = torrent ;
           obj["infoHash"] = digest ;
           self.torrents.push(obj);
-          self.emit("newTorrentAdded", obj);
+          self.emit("torrentAdded", obj);
       };
       torrent.on("verified", function(completed){
           torrent.getInfoHash(callbackInfoHash) ;
@@ -50,22 +50,33 @@ TorrentManager.prototype.addNewTorrent = function(torrentForm){
 
 TorrentManager.prototype.openTorrent = function(torrentForm){
   let self = this;
-  let torrent = new Torrent(torrentForm["torrent_filepath"], torrentForm["filepath"]);
-  let callbackInfoHash = function(digest){
-      torrent.listeningPort = self.listeningPort ;
-      let obj = {} ;
-      obj["torrent"] = torrent ;
-      obj["infoHash"] = digest ;
-      self.torrents.push(obj);
-      self.emit("newTorrentAdded", obj);
-  };
-  torrent.on("verified", function(completed){
-      torrent.getInfoHash(callbackInfoHash) ;
-  });
+  logger.info(`Opening ${torrentForm["torrent_filepath"]}`);
+  try {
+    let torrent = new Torrent(torrentForm["torrent_filepath"], torrentForm["filepath"]);
+    let callbackInfoHash = function(digest){
+        torrent.listeningPort = self.listeningPort ;
+        let obj = {} ;
+        obj["torrent"] = torrent ;
+        obj["infoHash"] = digest ;
+        self.torrents.push(obj);
+        self.emit("torrentAdded", obj);
+    };
+    torrent.on("verified", function(completed){
+        torrent.getInfoHash(callbackInfoHash) ;
+    });
+  } catch(err){
+    logger.error(`Error loading Torrent. ${err}`);
+    self.emit("errorParsingTorrent");
+  }
 };
 
-TorrentManager.prototype.deleteTorrent = function(torrent){
-
+TorrentManager.prototype.deleteTorrent = function(torrentIndex){
+  let self = this;
+  self.torrents[torrentIndex].torrent.stop(function(message){
+    logger.info(message);
+    self.torrents.splice(torrentIndex, 1);
+    self.emit("torrentDeleted", torrentIndex);
+  })
 };
 
 let parseTorrentCallback = function(torrentManager, jsonTorrentsData){

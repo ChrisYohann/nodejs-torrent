@@ -51,12 +51,19 @@ Decoder.prototype.decode = function(data){
             return checkIfStreamIsFinished.call(self, bencodedToken);
             break;
           case 0x3a:
-            bencodedToken = self.decode_string(string_length);
-            return checkIfStreamIsFinished.call(self, bencodedToken);
+            if(string_length != ""){
+              bencodedToken = self.decode_string(string_length);
+              return checkIfStreamIsFinished.call(self, bencodedToken);
+            } else {
+              const message = `Invalid Bencode Token ${String.fromCharCode(character)} at position ${self.position}`;
+              logger.error(message);
+              throw message;
+            }
+
             break;
           default:
             console.log("Character" + character);
-            let message = `Invalid Bencode Token ${String.fromCharCode(character)} at position ${self.position}`;
+            const message = `Invalid Bencode Token ${String.fromCharCode(character)} at position ${self.position}`;
             logger.error(message);
             throw message ;
         }
@@ -188,7 +195,7 @@ let checkIfStreamIsFinished = function(result){
   let self = this;
   if (self.position < self.data.length){
     let message = `Invalid Bencode Token. Parser is at position ${self.position} but EOF is at position ${self.data.length}`;
-    logger.error(message)
+    logger.error(message);
     throw message;
   } else {
     return result;

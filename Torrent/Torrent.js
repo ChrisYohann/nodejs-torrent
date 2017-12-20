@@ -82,6 +82,12 @@ Torrent.prototype.start = function(){
     }
 };
 
+Torrent.prototype.stop = function(callback){
+  logger.info(`Invoking Stop for ${this.name} torrent.`);
+  let message = `${this.name} Torrent Successfully stopped.`;
+  callback(message);
+}
+
 Torrent.prototype.seekForPeers = function(){
 	let nbPeersToAdd = MAX_ACTIVE_PEERS - this.activePeers.size();
 

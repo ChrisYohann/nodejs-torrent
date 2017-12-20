@@ -72,20 +72,40 @@ let openTorrentFromUIListener = function(torrentForm){
   self.torrentManager.openTorrent(torrentForm);
 }
 
+let deleteTorrentFromUIListener = function(torrentIndex){
+  let self = this;
+  self.torrentManager.deleteTorrent(torrentIndex);
+}
+
 let newTorrentFromManagerListener = function(torrentObj){
   let self = this;
   self.emit("newTorrent", torrentObj);
 };
 
+let deletedTorrentFromManagerListener = function(torrentIndex){
+  let self = this;
+  logger.info("Nb Torrents : "+self.torrents.length);
+  logger.info("Nb Torrents in UI : "+self.ui.torrents.length);
+  self.emit("deletedTorrent", torrentIndex);
+}
+
+let errorParsingTorrentFromManagerListener = function(){
+  let self = this;
+  self.ui.drawInterface();
+}
+
 let initTorrentManagerListeners = function(){
   let self = this;
-  self.torrentManager.on("newTorrentAdded", newTorrentFromManagerListener.bind(self));
+  self.torrentManager.on("torrentAdded", newTorrentFromManagerListener.bind(self));
+  self.torrentManager.on("torrentDeleted", deletedTorrentFromManagerListener.bind(self));
+  self.torrentManager.on("errorParsingTorrent", errorParsingTorrentFromManagerListener.bind(self));
 };
 
 let initUIListeners = function(){
   let self = this;
-  self.ui.on("newTorrentSubmitted", newTorrentFromUIListener.bind(self));
-  self.ui.on("openTorrentSubmitted", openTorrentFromUIListener.bind(self));
+  self.ui.on("newTorrentRequest", newTorrentFromUIListener.bind(self));
+  self.ui.on("openTorrentRequest", openTorrentFromUIListener.bind(self));
+  self.ui.on("deleteTorrentRequest", deleteTorrentFromUIListener.bind(self));
 };
 
 
