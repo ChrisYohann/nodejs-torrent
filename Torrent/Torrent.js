@@ -28,6 +28,7 @@ let Torrent = module.exports = function Torrent(metaFile, filepath) {
     this._metaData = metaData;
     this._mainTracker = metaData["announce"].toString();
     this.trackerList = ("announce-list" in metaData & metaData["announce-list"].length > 0) ? metaData["announce-list"] : undefined;
+    this.infoHash = undefined;
 
     //File fields
     this._torrentDisk = new TorrentDisk(metaData, filepath);
@@ -71,10 +72,10 @@ Torrent.prototype.start = function(){
     } else {
         this.activeTracker = getHTTPorUDPTracker.call(this, self.trackers[self.actualTrackerIndex]);
         this.activeTracker.on("peers", function(peerList){
-            peerList.foreach(function(peer){
+            peerList.forEach(function(peer){
                 self.lastKnownPeers.push(peer)
             });
-            if(!self.torrent.isComplete()){
+            if(self["_left"] != 0){
                 self.seekForPeers();
             }
         });
@@ -89,7 +90,7 @@ Torrent.prototype.stop = function(callback){
 }
 
 Torrent.prototype.seekForPeers = function(){
-	let nbPeersToAdd = MAX_ACTIVE_PEERS - this.activePeers.size();
+	let nbPeersToAdd = MAX_ACTIVE_PEERS - this.activePeers.length;
 
 
 };
@@ -107,6 +108,7 @@ Torrent.prototype.getInfoHash = function(callback){
         const sha1_hash = crypto.createHash("sha1");
         sha1_hash.update(infoHashEncoded);
         const digest = sha1_hash.digest();
+        self.infoHash = digest;
         callback(digest);
     });
     let encoder = new Encode(infoDictionary, "utf8", myWritableStreamBuffer);

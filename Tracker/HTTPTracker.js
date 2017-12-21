@@ -18,12 +18,12 @@ util.inherits(HTTPTracker, Tracker);
 HTTPTracker.prototype.prepareHTTPRequest = function(torrentEvent) {
     const torrentInfos = this.client;
     const requestParams = {
-        info_hash: Utils.createInfoHash(this._metaData["info"]),
+        info_hash: torrentInfos["infoHash"]),
         peer_id: Buffer.allocUnsafe(20),
-        port: torrentInfos.getListeningPort(),
-        uploaded: torrentInfos.getUploaded(),
-        downloaded: torrentInfos.getDownloaded(),
-        left: 0,
+        port: torrentInfos["listeningPort"],
+        uploaded: torrentInfos["_uploaded"],
+        downloaded: torrentInfos["_downloaded"],
+        left: torrentInfos["_left"],
         compact: 1,
         event: torrentEvent
     };
@@ -57,7 +57,6 @@ HTTPTracker.prototype.announce = function(torrentEvent) {
         })
     })
 };
-
 
 var callBackTrackerResponseHTTP = function (bencodedResponse) {
     const self = this;
