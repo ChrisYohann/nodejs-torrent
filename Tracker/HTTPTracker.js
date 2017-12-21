@@ -31,8 +31,8 @@ HTTPTracker.prototype.prepareHTTPRequest = function(torrentEvent) {
 };
 
 HTTPTracker.prototype.announce = function(torrentEvent) {
-    logger.info(`Sending ${torrentEvent} to ${self.announceURL}`)
     const self = this;
+    logger.info(`Sending ${torrentEvent} to ${self.announceURL}`);
     const httpRequest = this.prepareHTTPRequest(torrentEvent);
     logger.verbose(httpRequest);
     http.get(httpRequest, function (response) {
