@@ -35,7 +35,7 @@ const UDPTracker = module.exports = function UDPTracker(clientTorrent, announceU
     server.on('listening', () => {
         const address = server.address();
         logger.verbose(`Server listening ${address.address}:${address.port}`);
-        self.makeUDPConnectRequest();
+        self.announce();
     });
 
     this.server = server;
@@ -45,12 +45,14 @@ const UDPTracker = module.exports = function UDPTracker(clientTorrent, announceU
 util.inherits(UDPTracker, Tracker);
 
 UDPTracker.prototype.announce = function(){
+    let self = this;
     logger.info(`Connecting to ${self.announceURL}`);
     let connectMessage = Buffer.alloc(12);
     const connectionIDBuffer = Buffer.from(Utils.decimalToHexString(DEFAULT_CONNECTION_ID), "hex");
     connectionIDBuffer.copy(connectMessage, 0+8-connectionIDBuffer.length);
   connectMessage.writeInt32BE(CONNECT_ACTION, 8);
   connectMessage = Buffer.concat([connectMessage, this.transactionID]);
+  logger.debug("Sending Connect Message");
   logger.debug(connectMessage);
   if(this.trackerAddress && this.trackerPort){
     this.server.send(connectMessage, 0, 16, this.trackerPort, this.trackerAddress, function(error){
@@ -89,17 +91,17 @@ UDPTracker.prototype.makeUDPAnnounceRequest = function(torrentEvent){
     requestMessage.write(Utils.encodeBuffer(info_hash), 16, 20);
 
     requestMessage.write("CLI Torrent Client", 36, 20);
-    const amountDownloadedBuffer = Buffer.from(Utils.decimalToHexString(this.client.getDownloaded()), "hex");
+    const amountDownloadedBuffer = Buffer.from(Utils.decimalToHexString(this.client["_downloaded"]), "hex");
     amountDownloadedBuffer.copy(requestMessage, 56 + 8 - amountDownloadedBuffer.length);
-    const amountLeftBuffer = Buffer.from(Utils.decimalToHexString(this.client.getLeft()), "hex");
+    const amountLeftBuffer = Buffer.from(Utils.decimalToHexString(this.client["_left"]), "hex");
     amountLeftBuffer.copy(requestMessage, 64 + 8 - amountLeftBuffer.length);
-    const amountUploadedBuffer = Buffer.from(Utils.decimalToHexString(this.client.getUploaded()), "hex");
+    const amountUploadedBuffer = Buffer.from(Utils.decimalToHexString(this.client["_uploaded"]), "hex");
     amountUploadedBuffer.copy(requestMessage, 72 + 8 - amountUploadedBuffer.length);
     requestMessage.writeInt32BE(torrentEvent, 80);
     requestMessage.writeUInt32BE(0, 84);
     requestMessage.writeInt32BE(123456, 88);
     requestMessage.writeInt32BE(-1, 92);
-    requestMessage.writeInt16BE(6970, 96);
+    requestMessage.writeInt16BE(this.client["listeningPort"], 96);
 
     logger.silly(requestMessage);
 
@@ -118,9 +120,9 @@ UDPTracker.prototype.onConnectResponse = function(message){
       logger.error("Error : Connect Message should be 16 bytes length");
     throw "Error : Connect Message should be 16 bytes length"
   }
-
     const transactionID = message.readInt32BE(4);
-    if(transactionID != this.transactionID.readInt32BE(4)){
+    logger.debug("TransactionID : "+ transactionID);
+    if(transactionID != this.transactionID.readInt32BE(0)){
       logger.error("Error : TransactionID does not match the one sent by the client");
     throw "Error : TransactionID does not match the one sent by the client"
   }

@@ -18,7 +18,7 @@ util.inherits(HTTPTracker, Tracker);
 HTTPTracker.prototype.prepareHTTPRequest = function(torrentEvent) {
     const torrentInfos = this.client;
     const requestParams = {
-        info_hash: torrentInfos["infoHash"]),
+        info_hash: torrentInfos["infoHash"],
         peer_id: Buffer.allocUnsafe(20),
         port: torrentInfos["listeningPort"],
         uploaded: torrentInfos["_uploaded"],
