@@ -188,9 +188,10 @@ var initFiles = function(){
     })
   }
   this.fileNamesPath.forEach(function(fileName, fileIndex){
+      logger.info(`Retrieving file ${fileName} of length ${this.fileLengths[fileIndex]}`);
       const raf = new randomAccessFile(fileName, {length : self.fileLengths[fileIndex]});
       this.files.push(raf);
-  }, this);
+  }, self);
 };
 
 var computeTotalSize = function(){

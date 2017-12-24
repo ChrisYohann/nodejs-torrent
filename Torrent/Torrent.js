@@ -49,7 +49,7 @@ let Torrent = module.exports = function Torrent(metaFile, filepath) {
             let mergedTrackers = [].concat.apply([], torrent["_trackerList"]);
             return mergedTrackers ;
         } else {
-            return Array(this["_mainTracker"]);
+            return Array(self["_mainTracker"]);
         }
     })();
     this._torrentDisk.on('verified', function (completed) {
@@ -66,11 +66,12 @@ util.inherits(Torrent, EventEmitter);
 
 Torrent.prototype.start = function(){
     let self = this ;
+    console.log(this);
     if(this.trackers.length <= 0){
         logger.error("No valid Tracker found. Aborting.");
     } else {
-        this.activeTracker = getHTTPorUDPTracker.call(this, trackers[this.actualTrackerIndex]);
-        this.activeTracker.on("peers", function(peerList){
+        self.activeTracker = getHTTPorUDPTracker.call(this, self.trackers[self.actualTrackerIndex]);
+        self.activeTracker.on("peers", function(peerList){
             peerList.foreach(function(peer){
                 self.lastKnownPeers.push(peer)
             });
@@ -78,7 +79,7 @@ Torrent.prototype.start = function(){
                 self.seekForPeers();
             }
         });
-        this.activeTracker.announce("started");
+        self.activeTracker.announce("started");
     }
 };
 
