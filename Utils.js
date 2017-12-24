@@ -14,7 +14,7 @@ function encodeByte(byte){
       ? String.fromCharCode(byte) : '%' + padLeft(byte.toString(16), "00");
 }
 
- exports.encodeBuffer = function(buf){
+let encodeBuffer = exports.encodeBuffer = function(buf){
   return Array.prototype.map.call(buf, encodeByte).join('');
 };
 

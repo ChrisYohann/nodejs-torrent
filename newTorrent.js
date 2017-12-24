@@ -12,9 +12,16 @@ let CreateTorrent = module.exports = function CreateTorrent(torrentProperties, c
     const infoDictionary = new InfoDictionary(filepath, fileMode);
 
     infoDictionary.on("info_end", function(infoDict){
+        const announce_list = (function(){
+          if (torrentProperties["announce-list"].length > 0){
+            return torrentProperties.split(";").map(function(element,index,array){ return element.split(" ")}));
+          } else {
+            return [];
+          }
+        })();
         const torrentDict = new BencodeDict();
         torrentDict.putContent("announce", torrentProperties["announce"]);
-        torrentDict.putContent("announce-list", torrentProperties["announce-list"].split(";").map(function(element,index,array){ return element.split(" ")}));
+        torrentDict.putContent("announce-list", announce_list);
         torrentDict.putContent("comment", torrentProperties["comment"]);
         torrentDict.putContent("created by", "nhyne");
         torrentDict.putContent("creation date", Math.round(Date.now()/1000));

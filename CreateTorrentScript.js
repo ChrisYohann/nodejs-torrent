@@ -33,9 +33,16 @@ const fileMode = stats.isFile() ? "SINGLE_FILE_MODE" : "MULTIPLE_FILE_MODE";
 const infoDictionary = new InfoDictionary(filepath, fileMode);
 
 infoDictionary.on("info_end", function(infoDict){
+  const announce_list = (function(){
+    if (create_torrent_object["announce-list"].length > 0){
+      return torrentProperties.split(";").map(function(element,index,array){ return element.split(" ")});
+    } else {
+      return [];
+    }
+  })();
 	const torrentDict = new BencodeDict();
-	torrentDict.putContent("announce", create_torrent_object["announce"]);	
-	torrentDict.putContent("announce-list", create_torrent_object["announce-list"].split(";").map(function(element,index,array){ return element.split(" ")}));
+	torrentDict.putContent("announce", create_torrent_object["announce"]);
+	torrentDict.putContent("announce-list",announce_list);
 	torrentDict.putContent("comment", create_torrent_object["comment"]);
  	torrentDict.putContent("created by", "nhyne");
  	torrentDict.putContent("creation date", Math.round(Date.now()/1000));

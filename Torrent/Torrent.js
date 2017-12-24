@@ -27,7 +27,8 @@ let Torrent = module.exports = function Torrent(metaFile, filepath) {
     this.name = metaData["info"]["name"].toString();
     this._metaData = metaData;
     this._mainTracker = metaData["announce"].toString();
-    this.trackerList = ("announce-list" in metaData) ? metaData["announce-list"] : null;
+    this.trackerList = ("announce-list" in metaData & metaData["announce-list"].length > 0) ? metaData["announce-list"] : undefined;
+    this.infoHash = undefined;
 
     //File fields
     this._torrentDisk = new TorrentDisk(metaData, filepath);
@@ -46,14 +47,14 @@ let Torrent = module.exports = function Torrent(metaFile, filepath) {
     this.activeTracker = null;
     this.trackers = (function(){
         if(this.trackerList){
-            let mergedTrackers = [].concat.apply([], torrent["_trackerList"]);
+            let mergedTrackers = [].concat.apply([], self["trackerList"]);
             return mergedTrackers ;
         } else {
             return Array(self["_mainTracker"]);
         }
     })();
     this._torrentDisk.on('verified', function (completed) {
-        logger.debug(`${self.name} torrent verified. ${completed} bytes downloaded.`);
+        logger.info(`${self.name} torrent verified. ${completed} bytes downloaded.`);
         self._completed = completed;
         self._left = self._size - self._completed;
         self.emit('verified', completed)
@@ -70,12 +71,12 @@ Torrent.prototype.start = function(){
     if(this.trackers.length <= 0){
         logger.error("No valid Tracker found. Aborting.");
     } else {
-        self.activeTracker = getHTTPorUDPTracker.call(this, self.trackers[self.actualTrackerIndex]);
-        self.activeTracker.on("peers", function(peerList){
-            peerList.foreach(function(peer){
-                self.lastKnownPeers.push(peer)
+        this.activeTracker = getHTTPorUDPTracker.call(this, self.trackers[self.actualTrackerIndex]);
+        this.activeTracker.on("peers", function(peerList){
+            peerList.forEach(function(peer){
+              self.lastKnownPeers.push(peer)
             });
-            if(!self.torrent.isComplete()){
+            if(self["_left"] != 0){
                 self.seekForPeers();
             }
         });
@@ -90,7 +91,7 @@ Torrent.prototype.stop = function(callback){
 }
 
 Torrent.prototype.seekForPeers = function(){
-	let nbPeersToAdd = MAX_ACTIVE_PEERS - this.activePeers.size();
+	let nbPeersToAdd = MAX_ACTIVE_PEERS - this.activePeers.length;
 
 
 };
@@ -108,6 +109,7 @@ Torrent.prototype.getInfoHash = function(callback){
         const sha1_hash = crypto.createHash("sha1");
         sha1_hash.update(infoHashEncoded);
         const digest = sha1_hash.digest();
+        self.infoHash = digest;
         callback(digest);
     });
     let encoder = new Encode(infoDictionary, "utf8", myWritableStreamBuffer);
@@ -118,10 +120,11 @@ Torrent.prototype.isComplete = function(){
 };
 
 let getHTTPorUDPTracker = function(trackerURL){
+  let self = this;
     if(trackerURL.match(httpAddressRegex)){
-        this.activeTracker = new HTTPTracker(this, trackerURL);
+        return new HTTPTracker(self, trackerURL);
     } else if(trackerURL.match(udpAddressRegex)){
-        this.activeTracker = new UDPTracker(this, trackerURL);
+        return new UDPTracker(self, trackerURL);
     } else {
         logger.error("No valid Protocol for ${trackerURL} found. Aborting.");
     }
