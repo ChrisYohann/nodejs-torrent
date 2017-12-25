@@ -14,7 +14,7 @@ let CreateTorrent = module.exports = function CreateTorrent(torrentProperties, c
     infoDictionary.on("info_end", function(infoDict){
         const announce_list = (function(){
           if (torrentProperties["announce-list"].length > 0){
-            return torrentProperties.split(";").map(function(element,index,array){ return element.split(" ")}));
+            return torrentProperties["announce-list"].split(";").map(function(element,index,array){ return element.split(" ")});
           } else {
             return [];
           }

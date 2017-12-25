@@ -4,6 +4,10 @@ let logger = require("./log");
 let net = require("net");
 let UI = require("./UI/ui");
 let TorrentManager = require("./Peer/TorrentManager");
+let HandshakeParser = require("./Peer/HandshakeParser");
+const _ = require("underscore");
+
+const handshakeParser = new HandshakeParser();
 
 const EventEmitter = require("events");
 const util = require("util");
@@ -33,6 +37,38 @@ function getPort(callback){
         getPort(callback)
     });
 }
+
+let connectionListener = function(socket){
+  let self = this;
+  logger.verbose(`Incoming Connection from ${socket.remoteAddress}`);
+  socket.once("data", function(chunk){
+    handshakeParser.parse(chunk).then(function(parsedHandshake){
+      const torrentsWithSameInfoHash = _.filter(self.torrents, function(torrent){
+        return torrent["infoHash"].equals(parsedHandshake["infoHash"]);
+      });
+      if (torrentsWithSameInfoHash.length == 0){
+        logger.verbose("None valid Info Hash corresponding was found. Aborting Connection");
+        socket.end();
+      } else {
+          const torrent = torrentsWithSameInfoHash[0];
+          logger.verbose(`Peer ${socket.remoteAddress} is connecting for Torrent : ${torrent["torrent"]["name"]}`);
+          const handshakeResponse = handshakeParser.create(torrent["infoHash"], self.peerId);
+          /*const peer = (function(){
+            if("peerId" in parsedHandshake){
+              return new Peer(socket, parsedHandshake["peerId"]);
+            } else {
+              return new Peer(socket, null);
+            }
+          })();
+          peer.socket.on("data", torrentRolePlayer);
+          socket.write(handshakeResponse);*/
+      }
+    }).catch(function(failure){
+      logger.error("Error in Parsing Handshake. Aborting Connection");
+      socket.end();
+    });
+  });
+};
 
 let App = function App(){
     EventEmitter.call(this);
@@ -79,7 +115,11 @@ let deleteTorrentFromUIListener = function(torrentIndex){
 
 let newTorrentFromManagerListener = function(torrentObj){
   let self = this;
-  self.emit("newTorrent", torrentObj);
+  if(torrentObj){
+    self.emit("newTorrent", torrentObj);
+  } else {
+    self.ui.drawInterface();
+  }
 };
 
 let deletedTorrentFromManagerListener = function(torrentIndex){

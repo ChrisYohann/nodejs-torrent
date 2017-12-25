@@ -1,3 +1,4 @@
+const async = require("async");
 let logger = require("../log");
 let fs = require('fs');
 let EventEmitter = require('events').EventEmitter;
@@ -5,6 +6,8 @@ let util = require('util');
 let Torrent = require("../Torrent/Torrent");
 let CreateTorrent = require('../newTorrent');
 let Encode = require("../Bencode/Encode")
+const Promise = require('rsvp').Promise;
+const _ = require("underscore");
 
 let TorrentManager = module.exports = function TorrentManager(port){
     EventEmitter.call(this);
@@ -13,6 +16,27 @@ let TorrentManager = module.exports = function TorrentManager(port){
 };
 
 util.inherits(TorrentManager, EventEmitter);
+
+TorrentManager.prototype.pushTorrent = function(torrentWithInfoHash){
+  let self = this;
+  let torrentsWithSameInfoHash = (function(torrentList){
+    if(torrentList.length == 0){
+      return [] ;
+    } else {
+      return _.filter(torrentList, function(torrentObj){
+        return torrentObj["infoHash"].equals(torrentWithInfoHash["infoHash"]);
+      });
+    }
+  })(self.torrents);
+  if (torrentsWithSameInfoHash.length > 0){
+    const duplicatedTorrent = torrentsWithSameInfoHash[0];
+    logger.warn(`Torrent already existing as ${duplicatedTorrent["torrent"]["name"]}`);
+    return 0 ;
+  } else {
+    self.torrents.push(torrentWithInfoHash);
+    return 1 ;
+  }
+};
 
 TorrentManager.prototype.loadTorrents = function(confFile){
     let self = this ;
@@ -39,8 +63,12 @@ TorrentManager.prototype.addNewTorrent = function(torrentForm){
           let obj = {} ;
           obj["torrent"] = torrent ;
           obj["infoHash"] = digest ;
-          self.torrents.push(obj);
-          self.emit("torrentAdded", obj);
+          const status = self.pushTorrent(obj);
+          if (status > 0){
+            self.emit("torrentAdded", obj);
+          } else {
+            self.emit("torrentAdded", null);
+          }
       };
       torrent.on("verified", function(completed){
           torrent.getInfoHash(callbackInfoHash) ;
@@ -58,8 +86,12 @@ TorrentManager.prototype.openTorrent = function(torrentForm){
         let obj = {} ;
         obj["torrent"] = torrent ;
         obj["infoHash"] = digest ;
-        self.torrents.push(obj);
-        self.emit("torrentAdded", obj);
+        const status = self.pushTorrent(obj);
+        if (status > 0){
+          self.emit("torrentAdded", obj);
+        } else {
+          self.emit("torrentAdded", null);
+        }
     };
     torrent.on("verified", function(completed){
         torrent.getInfoHash(callbackInfoHash) ;
@@ -80,34 +112,32 @@ TorrentManager.prototype.deleteTorrent = function(torrentIndex){
 };
 
 let parseTorrentCallback = function(torrentManager, jsonTorrentsData){
-    let nbTorrents = jsonTorrentsData.length;
-    let nbValidatedTorrents = 0;
-    jsonTorrentsData.forEach(function(element, index, array){
-        let obj = {};
-        if("filepath" in element && "torrent_file" in element){
-            logger.info(`Loading ${element["torrent_file"]}`);
-            let torrent = new Torrent(element["torrent_file"], element["filepath"]);
-            let callbackInfoHash = function(digest){
-                torrent.listeningPort = torrentManager.listeningPort ;
-                obj["torrent"] = torrent ;
-                obj["infoHash"] = digest ;
-                torrentManager.torrents.push(obj);
-                //torrent.start();
-                nbValidatedTorrents += 1 ;
-                if (nbValidatedTorrents == nbTorrents){
-                  torrentManager.emit("loadingComplete", torrentManager.torrents);
-                }
-            };
-            torrent.on("verified", function(completed){
-                torrent.getInfoHash(callbackInfoHash) ;
-            });
-
-        } else {
-            nbValidatedTorrents += 1 ;
-            if (nbValidatedTorrents == nbTorrents){
-              logger.info("Torrents Loaded");
-              torrentManager.emit("loadingComplete", torrentManager.torrents);
-            }
-        }
-    });
-};
+  const validJsonData = _.filter(jsonTorrentsData, function(item){
+    return "filepath" in item && "torrent_file" in item ;
+  });
+  const mappingFunc = function(item, callback){
+    let obj = {};
+    try {
+      logger.info(`Loading ${item["torrent_file"]}`);
+      const torrent = new Torrent(item["torrent_file"], item["filepath"]);
+      const callbackInfoHash = function(digest){
+        torrent.listeningPort = torrentManager.listeningPort;
+        obj["torrent"] = torrent;
+        obj["infoHash"] = digest;
+        torrentManager.pushTorrent(obj);
+        //torrent.start();
+        callback(null);
+      }
+      torrent.on("verified", function(completed){
+        torrent.getInfoHash(callbackInfoHash);
+      });
+    } catch(err){
+          logger.error(`Error loading Torrent. ${err}`);
+          callback(null);
+    }
+  };
+  async.each(validJsonData, mappingFunc, function(err){
+    if(err) logger.error(err);
+    torrentManager.emit("loadingComplete", torrentManager.torrents);
+  });
+}
