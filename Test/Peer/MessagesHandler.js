@@ -29,7 +29,7 @@ describe("### TEST MESSAGE HANDLER ###", function(){
       it("It should parse the Request message correctly", function(){
           const requestMessage = new Request(1, 2, 3);
           const requestMessageBuffer = requestMessage.send();
-          const expectedResult = messagesHandler.parseTorrentMessage(requestMessageBuffer);
+          const expectedResult = messagesHandler.parseMessage(requestMessageBuffer);
           expect(expectedResult.messageID).to.equal(6);
         expect(expectedResult.index).to.equal(1);
         expect(expectedResult.begin).to.equal(2);
@@ -39,7 +39,7 @@ describe("### TEST MESSAGE HANDLER ###", function(){
       it("It should parse the Cancel message correctly", function(){
           const cancelMessage = new Cancel(1, 2, 3);
           const cancelMessageBuffer = cancelMessage.send();
-          const expectedResult = messagesHandler.parseTorrentMessage(cancelMessageBuffer);
+          const expectedResult = messagesHandler.parseMessage(cancelMessageBuffer);
           expect(expectedResult.messageID).to.equal(8);
         expect(expectedResult.index).to.equal(1);
         expect(expectedResult.begin).to.equal(2);
@@ -57,7 +57,7 @@ describe("### TEST MESSAGE HANDLER ###", function(){
        it("It should parse the Piece Message correctly", function(){
          const pieceMessage = new Piece(index, begin, block);
          const pieceMessageBuffer = pieceMessage.send();
-         const expectedResult = messagesHandler.parseTorrentMessage(pieceMessageBuffer);
+         const expectedResult = messagesHandler.parseMessage(pieceMessageBuffer);
          expect(expectedResult.messageID).to.equal(7);
         expect(expectedResult.index).to.equal(1);
         expect(expectedResult.begin).to.equal(2);
@@ -67,7 +67,7 @@ describe("### TEST MESSAGE HANDLER ###", function(){
      describe("Test Parsing KeepAlive", function(){
        it("It should return a KeepAlive Message", function(){
            const keepAlive = new KeepAlive();
-           const expectedResult = messagesHandler.parseTorrentMessage(keepAlive.send());
+           const expectedResult = messagesHandler.parseMessage(keepAlive.send());
            expect(expectedResult.lengthPrefix).to.equal(0)
        })
      })

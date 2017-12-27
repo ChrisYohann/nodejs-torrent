@@ -4,7 +4,7 @@ let logger = require("./log");
 let net = require("net");
 let UI = require("./UI/ui");
 let TorrentManager = require("./Peer/TorrentManager");
-let HandshakeParser = require("./Peer/HandshakeParser");
+let HandshakeParser = require("./Peer/handshake");
 const _ = require("underscore");
 
 const handshakeParser = new HandshakeParser();

@@ -8,7 +8,8 @@ const crypto = require('crypto');
 const mocha = require('mocha');
 const fs = require("fs");
 const os = require('os');
-const Decode = require("../../Bencode/Decode");
+const Decoder = require("../../Bencode/Decoder");
+const bencodeDecoder = new Decoder("utf8");
 const TorrentDisk = require("../../Disk/TorrentDisk");
 const path = require("path");
 
@@ -28,8 +29,8 @@ const testMultipleFiles = "./Test/Disk/TestFiles/TestMultipleFiles";
 
 describe("### TORRENT DISK TESTS ###", function(){
   describe("*** Init Torrent Disk***", function(){
-      const parsedTorrentSingleFile = new Decode(testSingleFile + ".torrent");
-      const parsedTorrentMultipleFiles = new Decode(testMultipleFiles + ".torrent");
+      const parsedTorrentSingleFile = bencodeDecoder.decode(testSingleFile + ".torrent");
+      const parsedTorrentMultipleFiles = bencodeDecoder.decode(testMultipleFiles + ".torrent");
       console.log(parsedTorrentSingleFile.toString());
       const torrentDiskSingleFile = new TorrentDisk(parsedTorrentSingleFile, testSingleFile + ".bin");
       const torrentDiskMultipleFiles = new TorrentDisk(parsedTorrentMultipleFiles, testMultipleFiles);
@@ -94,7 +95,7 @@ describe("### TORRENT DISK TESTS ###", function(){
   });
 
   describe("Test verify function for Single File", function(){
-      const parsedTorrentSingleFile = new Decode(testSingleFile + ".torrent");
+      const parsedTorrentSingleFile = bencodeDecoder.decode(testSingleFile + ".torrent");
       const torrentDiskSingleFile = new TorrentDisk(parsedTorrentSingleFile, testSingleFile + ".bin");
 
       describe("Test verify on a 100% completed File", function(){
@@ -106,7 +107,7 @@ describe("### TORRENT DISK TESTS ###", function(){
   });
 
   describe("Test verify function for MultipleFiles", function(){
-      const parsedTorrentMultipleFiles = new Decode(testMultipleFiles + ".torrent");
+      const parsedTorrentMultipleFiles = bencodeDecoder.decode(testMultipleFiles + ".torrent");
       const torrentDiskMultipleFiles = new TorrentDisk(parsedTorrentMultipleFiles, testMultipleFiles);
 
       describe("Test verify function on a 100% completed Files", function(){
@@ -120,7 +121,7 @@ describe("### TORRENT DISK TESTS ###", function(){
   });
 
   describe("Test Bitfield function for SingleFile", function(){
-      const parsedTorrentSingleFile = new Decode(testSingleFile + ".torrent");
+      const parsedTorrentSingleFile = bencodeDecoder.decode(testSingleFile + ".torrent");
       const torrentDiskSingleFile = new TorrentDisk(parsedTorrentSingleFile, testSingleFile + ".bin");
 
       describe("Test BitField function on a 100% completed File", function(){
@@ -133,7 +134,7 @@ describe("### TORRENT DISK TESTS ###", function(){
   });
 
   describe("Test Bitfield function for MultipleFiles", function(){
-      const parsedTorrentMultipleFiles = new Decode(testMultipleFiles + ".torrent");
+      const parsedTorrentMultipleFiles = bencodeDecoder.decode(testMultipleFiles + ".torrent");
       const torrentDiskMultipleFiles = new TorrentDisk(parsedTorrentMultipleFiles, testMultipleFiles);
 
       describe("Test BitField function on a 100% completed File", function(){

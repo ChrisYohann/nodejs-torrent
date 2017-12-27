@@ -24,14 +24,16 @@ let Torrent = module.exports = function Torrent(metaFile, filepath) {
     let metaData = convertBencodeDictForTorrent(metaData_tmp, ["pieces"]);
 
     //metaFile fields
-    this.name = metaData["info"]["name"].toString();
+    this.name = metaData["info"]["name"];
     this._metaData = metaData;
-    this._mainTracker = metaData["announce"].toString();
+    this._mainTracker = metaData["announce"];
     this.trackerList = ("announce-list" in metaData & metaData["announce-list"].length > 0) ? metaData["announce-list"] : undefined;
     this.infoHash = undefined;
 
     //File fields
     this._torrentDisk = new TorrentDisk(metaData, filepath);
+    this.bitfield = undefined;
+
     // Events
     this._uploaded = this["_torrentDisk"]["uploaded"];
     this._downloaded = this["_torrentDisk"]["downloaded"];
@@ -53,13 +55,16 @@ let Torrent = module.exports = function Torrent(metaFile, filepath) {
             return Array(self["_mainTracker"]);
         }
     })();
-    this._torrentDisk.on('verified', function (completed) {
-        logger.info(`${self.name} torrent verified. ${completed} bytes downloaded.`);
-        self._completed = completed;
-        self._left = self._size - self._completed;
-        self.emit('verified', completed)
+
+    this._torrentDisk.verify().then(function(completed){
+      logger.info(`${self.name} torrent verified. ${completed} bytes downloaded.`);
+      self._completed = completed;
+      self._left = self._size - self._completed;
+      return self._torrentDisk.getBitfieldFromFile().then(function(bitfield){
+        self.bitfield = bitfield;
+        self.emit('verified', completed);
+      });
     });
-    this._torrentDisk.verify();
 
 };
 
@@ -118,6 +123,22 @@ Torrent.prototype.getInfoHash = function(callback){
 Torrent.prototype.isComplete = function(){
     return this._left == 0 ;
 };
+
+Torrent.prototype.containsPiece = function(index){
+  let self = this;
+  let mask = 1 << (index/8 + 1) * 8 - index - 1;
+  let i = index/8;
+  if ((self.bitfield[i] & mask) == 0)
+    return false;
+  return true;
+}
+
+Torrent.prototype.updateBitfield = function(index){
+  let self = this;
+  let value = 1 << (index/8 + 1) * 8 - index - 1;
+  let i = index/8;
+  self.bitfield[i] |= value;
+}
 
 let getHTTPorUDPTracker = function(trackerURL){
   let self = this;
