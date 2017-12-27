@@ -56,3 +56,18 @@ exports.decimalToHexString = function(number){
     return hexString
   }
 };
+
+exports.bitfieldContainsPiece = function(bitfield, pieceIndex){
+    let mask = 1 << (index/8 + 1) * 8 - index - 1;
+    let i = index/8;
+    if((bitfield[i] & mask) == 0)
+        return false;
+    return true;
+};
+
+exports.updateBitfield = function(bitfield, pieceIndex){
+    let value = 1 << (index/8 + 1) * 8 - index - 1;
+    let i = index/8;
+    bitfield[i] |= value;
+    return bitfield;
+};

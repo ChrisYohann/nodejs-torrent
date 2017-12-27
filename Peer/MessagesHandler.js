@@ -29,22 +29,21 @@ const MessagesHandler = module.exports = function MessagesHandler(waitingForPeer
   this.offset = 0;
 
   this.partialStatus = (typeof awaitPeerId === "undefined") ? DECODING_LENGTH_PREFIX : AWAIT_PEER_ID;
-  this.partialPeerID = Buffer.alloc(0);
-  this.partialLengthPrefix = Buffer.alloc(0);
-  this.partialMessageID = Buffer.alloc(0);
-  this.partialPayload = Buffer.alloc(0);
-
+  this.clear(false);
 };
 
-util.inherits(MessagesHandler, EventEmitter)
+util.inherits(MessagesHandler, EventEmitter);
 
 MessagesHandler.prototype.parseTorrentMessages = function(chunk){
   let self = this;
+  let result = [];
   self.offset = 0;
-  logger.verbose(chunk.length);
+  logger.verbose("Incoming Chunk. Length : "+chunk.length+" Offset : "+self.offset);
   while(self.offset < chunk.length){
-    const message = self.parseMessage(chunk);
+    const message = self.parseMessage(chunk, true);
+    if(message) result.push(message);
   }
+  return result;
 };
 
 MessagesHandler.prototype.parseMessage = function(chunk, isPartial){
@@ -64,23 +63,30 @@ MessagesHandler.prototype.parseMessage = function(chunk, isPartial){
             self.clear();
             return null ;
           }
-          if(lengthPrefix == 0) return new KeepAlive();
+          if(lengthPrefix == 0){
+            self.clear();
+            return new KeepAlive();
+          }
       case DECODING_BYTE_ID:
         const messageID = decodeMessageID.call(self, chunk);
         logger.verbose("Message ID : "+messageID);
       case DECODING_PAYLOAD:
-          switch(messageID){
+          switch(self.partialMessageID){
             case 0 :
+                    self.clear();
                     return new Choke();
             case 1 :
+                    self.clear();
                     return new Unchoke();
             case 2 :
+                    self.clear();
                     return new Interested();
             case 3 :
+                    self.clear();
                     return new NotInterested();
             default:
                     const payload = decodePayload.call(self, chunk);
-                    const message = parsePayload(messageID, payload);
+                    const message = parsePayload(self.partialMessageID, payload);
                     self.clear();
                     return message;
           }
@@ -89,18 +95,18 @@ MessagesHandler.prototype.parseMessage = function(chunk, isPartial){
           return null;
     }
   } catch(e){
-    self.clear();
     return null;
   }
 };
 
-MessagesHandler.prototype.clear = function(){
+MessagesHandler.prototype.clear = function(resetStatus){
   let self = this;
-  self.partialStatus = DECODING_LENGTH_PREFIX;
+  resetStatus = (typeof resetStatus === "undefined") ? true : resetStatus;
+  self.partialStatus = resetStatus ? DECODING_LENGTH_PREFIX : self.partialStatus;
+  self.partialMessageID = resetStatus ? -1 : self.partialMessageID;
   self.partialLengthPrefix = Buffer.alloc(0);
-  self.partialMessageID = Buffer.alloc(0);
   self.partialPayload = Buffer.alloc(0);
-}
+};
 
 let parsePayload = function(messageID, buffer){
   logger.verbose("Parsing Payload");
@@ -151,46 +157,41 @@ let decodePeerID = function(chunk){
     const remainingBytes = 20 - self.partialPeerID.length;
     const otherPart = chunk.slice(self.offset, remainingBytes);
     self.partialPeerID = Buffer.concat([self.partialPeerID, self.othePart]);
+    self.offset += otherPart.length;
     if(self.partialPeerID.length == 20){
       self.partialStatus++ ;
-      self.offset += otherPart.length;
       return self.partialPeerID;
     } else {
       let message = `Only ${self.partialPeerID.length} bytes for peerID. Waiting for next chunk.`
       logger.verbose(message);
-      self.offset = 0;
       throw message;
     }
   } else {
     let message = `Only ${self.partialPeerID.length} bytes for peerID. Waiting for next chunk.`
     logger.verbose(message);
-    self.offset = 0;
     throw message;
   }
-}
+};
 
 let decodeLengthPrefix = function(chunk){
   logger.verbose("Decoding Length Prefix");
   let self = this;
   if(self.offset < chunk.length){
     const remainingBytes = 4 - self.partialLengthPrefix.length;
-    const otherPart = chunk.slice(self.offset, remainingBytes);
+    const otherPart = chunk.slice(self.offset, self.offset+remainingBytes);
     self.partialLengthPrefix = Buffer.concat([self.partialLengthPrefix, otherPart]);
+    self.offset += otherPart.length;
     if(self.partialLengthPrefix.length == 4){
         self.partialStatus = DECODING_BYTE_ID;
-        self.offset += otherPart.length;
         return self.partialLengthPrefix.readInt32BE(0);
     } else {
-      let message = `Only ${self.partialLengthPrefix.length} bytes for lengthPrefix. Waiting for next chunk.`
+      let message = `Only ${self.partialLengthPrefix.length} bytes for lengthPrefix. Waiting for next chunk.`;
       logger.verbose(message);
-      self.offset = 0;
-      self.partialStatus++ ;
       throw message;
     }
   } else {
     let message = "Unsufficient Bytes remaining in the socket to determine Length Prefix. Waiting For next chunk."
     logger.verbose(message);
-    self.offset = 0;
     throw message ;
   }
 };
@@ -207,7 +208,6 @@ let decodeMessageID = function(chunk){
   } else {
     let message = "Unsufficient Bytes Remaining in the socket to determine messageID. Waiting For next chunk"
     logger.verbose(message);
-    self.offset = 0;
     throw message ;
   }
 };
@@ -221,19 +221,17 @@ let decodePayload = function(chunk){
     const remainingBytes = payloadLength - self.partialPayload.length;
     const otherPart = chunk.slice(self.offset, self.offset+remainingBytes);
     self.partialPayload = Buffer.concat([self.partialPayload, otherPart]);
+    self.offset += otherPart.length;
     logger.verbose(`Partial Payload length = ${self.partialPayload.length}`);
     if(self.partialPayload.length == payloadLength){
-      self.offset += otherPart.length;
       return self.partialPayload;
     } else {
-      self.offset = 0;
-      let message = "Unsufficient bytes to read in payload"
+      let message = "Unsufficient bytes to read in payload";
       logger.verbose(message);
       throw message;
     }
   } else {
-    self.offset = 0;
-    let message = "Unsufficient bytes to read in payload"
+    let message = "Unsufficient bytes to read in payload";
     logger.verbose(message);
     throw message;
   }

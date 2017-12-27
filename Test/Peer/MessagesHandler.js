@@ -72,5 +72,31 @@ describe("### TEST MESSAGE HANDLER ###", function(){
        })
      })
    })
-  })
+  });
+    describe("- Test Parsing Streaming Torrent Messages", function(){
+      const indexFirstPiece = 1;
+      const beginFirstPiece = 2;
+      const firstPartPayloadFirstPiece = Buffer.alloc(8);
+      firstPartPayloadFirstPiece.writeInt32BE(indexFirstPiece, 0);
+      firstPartPayloadFirstPiece.writeInt32BE(beginFirstPiece, 4);
+      const blockFirstPiece = Buffer.allocUnsafe(5);
+      const payloadFirstPiece = Buffer.concat([firstPartPayloadFirstPiece, blockFirstPiece]);
+      const pieceMessage = new Piece(indexFirstPiece, beginFirstPiece, blockFirstPiece);
+      const pieceMessageBuffer = pieceMessage.send();
+      const requestMessage = new Request(1, 2, 3);
+      const requestMessageBuffer = requestMessage.send();
+      const bigBuffer = Buffer.concat([pieceMessageBuffer, requestMessageBuffer]);
+      it("It should parse the 2 messages Correctly", function(){
+        const messages = messagesHandler.parseTorrentMessages(bigBuffer);
+        expect(messages).to.deep.equal([pieceMessage, requestMessage]);
+      });
+      it("It should return the first messages then the second", function(){
+        const splittedMessageFirstPart = bigBuffer.slice(0, 25);
+        const splittedMessageSecondPart = bigBuffer.slice(25);
+        const firstMessage = messagesHandler.parseTorrentMessages(splittedMessageFirstPart);
+        const secondMessage = messagesHandler.parseTorrentMessages(splittedMessageSecondPart);
+        expect(firstMessage[0]).to.deep.equal(pieceMessage);
+        expect(secondMessage[0]).to.deep.equal(requestMessage);
+      });
+    });
 });

@@ -2,6 +2,7 @@ const TorrentDisk = require("../Disk/TorrentDisk");
 const Decoder = require("../Bencode/Decoder");
 const Encode = require("../Bencode/Encode");
 const logger = require("../log");
+const Utils = require("../Utils");
 const _ = require("underscore");
 
 const HTTPTracker = require("../Tracker/HTTPTracker");
@@ -125,20 +126,22 @@ Torrent.prototype.isComplete = function(){
 };
 
 Torrent.prototype.containsPiece = function(index){
-  let self = this;
-  let mask = 1 << (index/8 + 1) * 8 - index - 1;
-  let i = index/8;
-  if ((self.bitfield[i] & mask) == 0)
-    return false;
-  return true;
-}
+    let self = this;
+    Utils.bitfieldContainsPiece(self.bitfield, index);
+};
 
 Torrent.prototype.updateBitfield = function(index){
-  let self = this;
-  let value = 1 << (index/8 + 1) * 8 - index - 1;
-  let i = index/8;
-  self.bitfield[i] |= value;
-}
+    let self = this;
+    self.bitfield = Utils.updateBitfield(self.bitfield, index);
+};
+
+Torrent.prototype.read = function(index, begin, length){
+    return this._torrentDisk.read(index, begin, length);
+};
+
+Torrent.prototype.write = function(index, begin, block){
+    return this._torrentDisk.write(index, begin, block);
+};
 
 let getHTTPorUDPTracker = function(trackerURL){
   let self = this;
