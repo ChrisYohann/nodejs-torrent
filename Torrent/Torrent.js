@@ -131,7 +131,7 @@ Torrent.prototype.isComplete = function(){
 
 Torrent.prototype.containsPiece = function(index){
     let self = this;
-    Utils.bitfieldContainsPiece(self.bitfield, index);
+    return Utils.bitfieldContainsPiece(self.bitfield, index);
 };
 
 Torrent.prototype.updateBitfield = function(index){

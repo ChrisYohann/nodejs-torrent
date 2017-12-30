@@ -98,9 +98,16 @@ Peer.prototype.addMessageToQueue = function(message){
     }
 };
 
+Peer.prototype.requestPiece = function(pieceIndex){};
+
 Peer.prototype.containsPiece = function(index){
     let self = this;
-    Utils.bitfieldContainsPiece(self.peer_bitfield, index);
+    if (self.peer_bitfield != null){
+        return Utils.bitfieldContainsPiece(self.peer_bitfield, index);
+    } else {
+        return false;
+    }
+
 };
 
 let receiveKeepAlive = function(){
