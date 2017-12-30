@@ -1,7 +1,7 @@
 require('any-promise/register/rsvp');
 const Promise = require('any-promise');
-const MessagesHandler = require("../../Peer/MessagesHandler");
-const Messages = require("../../Peer/TorrentMessages");
+const MessagesHandler = require("../../peer/messagesHandler");
+const Messages = require("../../peer/torrentMessages");
 const Choke = Messages.Choke;
 const Unchoke = Messages.Unchoke;
 const Interested = Messages.Interested;
@@ -28,7 +28,7 @@ describe("### TEST MESSAGE HANDLER ###", function(){
     describe("Test Parsing Request/Cancel Message", function(){
       it("It should parse the Request message correctly", function(){
           const requestMessage = new Request(1, 2, 3);
-          const requestMessageBuffer = requestMessage.send();
+          const requestMessageBuffer = requestMessage.build();
           const expectedResult = messagesHandler.parseMessage(requestMessageBuffer);
           expect(expectedResult.messageID).to.equal(6);
         expect(expectedResult.index).to.equal(1);
@@ -38,7 +38,7 @@ describe("### TEST MESSAGE HANDLER ###", function(){
 
       it("It should parse the Cancel message correctly", function(){
           const cancelMessage = new Cancel(1, 2, 3);
-          const cancelMessageBuffer = cancelMessage.send();
+          const cancelMessageBuffer = cancelMessage.build();
           const expectedResult = messagesHandler.parseMessage(cancelMessageBuffer);
           expect(expectedResult.messageID).to.equal(8);
         expect(expectedResult.index).to.equal(1);
@@ -56,7 +56,7 @@ describe("### TEST MESSAGE HANDLER ###", function(){
        const payload = Buffer.concat([firstPartPayload, block]);
        it("It should parse the Piece Message correctly", function(){
          const pieceMessage = new Piece(index, begin, block);
-         const pieceMessageBuffer = pieceMessage.send();
+         const pieceMessageBuffer = pieceMessage.build();
          const expectedResult = messagesHandler.parseMessage(pieceMessageBuffer);
          expect(expectedResult.messageID).to.equal(7);
         expect(expectedResult.index).to.equal(1);
@@ -67,7 +67,7 @@ describe("### TEST MESSAGE HANDLER ###", function(){
      describe("Test Parsing KeepAlive", function(){
        it("It should return a KeepAlive Message", function(){
            const keepAlive = new KeepAlive();
-           const expectedResult = messagesHandler.parseMessage(keepAlive.send());
+           const expectedResult = messagesHandler.parseMessage(keepAlive.build());
            expect(expectedResult.lengthPrefix).to.equal(0)
        })
      })
@@ -82,9 +82,9 @@ describe("### TEST MESSAGE HANDLER ###", function(){
       const blockFirstPiece = Buffer.allocUnsafe(5);
       const payloadFirstPiece = Buffer.concat([firstPartPayloadFirstPiece, blockFirstPiece]);
       const pieceMessage = new Piece(indexFirstPiece, beginFirstPiece, blockFirstPiece);
-      const pieceMessageBuffer = pieceMessage.send();
+      const pieceMessageBuffer = pieceMessage.build();
       const requestMessage = new Request(1, 2, 3);
-      const requestMessageBuffer = requestMessage.send();
+      const requestMessageBuffer = requestMessage.build();
       const bigBuffer = Buffer.concat([pieceMessageBuffer, requestMessageBuffer]);
       it("It should parse the 2 messages Correctly", function(){
         const messages = messagesHandler.parseTorrentMessages(bigBuffer);

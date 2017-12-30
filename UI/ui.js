@@ -11,8 +11,6 @@ let inquirer = require('inquirer') ;
 let CreateTorrent = require('../newTorrent');
 let Torrent = require('../Torrent/Torrent');
 let TorrentLine = require('./torrentLine');
-let Encode = require('../Bencode/Encode');
-let Decode = require('../Bencode/Decode');
 
 const NB_COLUMNS = process.stdout.columns || 80 ;
 const NB_ROWS = process.stdout.rows || 24 ;

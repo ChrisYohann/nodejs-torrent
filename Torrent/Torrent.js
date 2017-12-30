@@ -1,12 +1,12 @@
-const TorrentDisk = require("../Disk/TorrentDisk");
+const TorrentDisk = require("../disk/TorrentDisk");
 const Decoder = require("../Bencode/Decoder");
 const Encode = require("../Bencode/Encode");
 const logger = require("../log");
 const Utils = require("../Utils");
 const _ = require("underscore");
 
-const HTTPTracker = require("../Tracker/HTTPTracker");
-const UDPTracker = require("../Tracker/UDPTracker");
+const HTTPTracker = require("../tracker/HTTPTracker");
+const UDPTracker = require("../tracker/UDPTracker");
 const util = require('util');
 const EventEmitter = require('events').EventEmitter;
 const crypto = require('crypto');
@@ -42,7 +42,7 @@ let Torrent = module.exports = function Torrent(metaFile, filepath) {
     this._size = this["_torrentDisk"]["totalSize"];
     this._left = this["_size"] - this["_completed"];
 
-    //Peer Fields
+    //peer Fields
     this.listeningPort = null ;
     this.lastKnownPeers = [] ;
     this.activePeers = [] ;
@@ -75,7 +75,7 @@ Torrent.prototype.start = function(){
     let self = this ;
     console.log(this);
     if(this.trackers.length <= 0){
-        logger.error("No valid Tracker found. Aborting.");
+        logger.error("No valid tracker found. Aborting.");
     } else {
         this.activeTracker = getHTTPorUDPTracker.call(this, self.trackers[self.actualTrackerIndex]);
         this.activeTracker.on("peers", function(peerList){
@@ -94,7 +94,11 @@ Torrent.prototype.stop = function(callback){
   logger.info(`Invoking Stop for ${this.name} torrent.`);
   let message = `${this.name} Torrent Successfully stopped.`;
   callback(message);
-}
+};
+
+Torrent.prototype.addPeer = function(peer, isIncomingConnection){
+
+};
 
 Torrent.prototype.seekForPeers = function(){
 	let nbPeersToAdd = MAX_ACTIVE_PEERS - this.activePeers.length;

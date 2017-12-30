@@ -2,7 +2,7 @@ const util = require('util');
 const EventEmitter = require('events').EventEmitter;
 
 let logger = require("../log");
-const Messages = require("./TorrentMessages");
+const Messages = require("./torrentMessages");
 const KeepAlive = Messages.KeepAlive;
 const Choke = Messages.Choke;
 const Unchoke = Messages.Unchoke;
@@ -28,7 +28,7 @@ const MessagesHandler = module.exports = function MessagesHandler(waitingForPeer
   EventEmitter.call(this);
   this.offset = 0;
 
-  this.partialStatus = (typeof awaitPeerId === "undefined") ? DECODING_LENGTH_PREFIX : AWAIT_PEER_ID;
+  this.partialStatus = (typeof waitingForPeerId === "undefined") ? DECODING_LENGTH_PREFIX : AWAIT_PEER_ID;
   this.clear(false);
 };
 
@@ -65,6 +65,7 @@ MessagesHandler.prototype.parseMessage = function(chunk, isPartial){
           }
           if(lengthPrefix == 0){
             self.clear();
+            self.emit("keepAlive")
             return new KeepAlive();
           }
       case DECODING_BYTE_ID:
@@ -74,19 +75,23 @@ MessagesHandler.prototype.parseMessage = function(chunk, isPartial){
           switch(self.partialMessageID){
             case 0 :
                     self.clear();
+                    self.emit("choke");
                     return new Choke();
             case 1 :
                     self.clear();
+                    self.emit("unchoke");
                     return new Unchoke();
             case 2 :
                     self.clear();
+                    self.emit("interested");
                     return new Interested();
             case 3 :
                     self.clear();
+                    self.emit("notInterested");
                     return new NotInterested();
             default:
                     const payload = decodePayload.call(self, chunk);
-                    const message = parsePayload(self.partialMessageID, payload);
+                    const message = parsePayload.call(self, self.partialMessageID, payload);
                     self.clear();
                     return message;
           }
@@ -109,41 +114,39 @@ MessagesHandler.prototype.clear = function(resetStatus){
 };
 
 let parsePayload = function(messageID, buffer){
+  let self = this;
   logger.verbose("Parsing Payload");
   let offset = 0;
   switch(messageID){
-      case 0 :
-              return new Choke();
-      case 1 :
-              return new Unchoke();
-      case 2 :
-              return new Interested();
-      case 3 :
-              return new NotInterested();
       case 4 :
           const pieceIndex = buffer.readInt32BE(offset);
           logger.verbose("Have : Index = " + pieceIndex);
+          self.emit("have", pieceIndex);
           return new Have(pieceIndex);
       case 5 :
           const bitfieldBuffer = buffer.slice(offset);
+          self.emit("bitfield", bitfieldBuffer);
           return new Bitfield(bitfieldBuffer);
       case 6 :
           let indexRequest = buffer.readInt32BE(offset);
           let beginRequest = buffer.readInt32BE(offset+4);
           let lengthRequest = buffer.readInt32BE(offset+8);
           logger.verbose("Request : Index = " + indexRequest + " Begin : " + beginRequest + " Length : " + lengthRequest);
+          self.emit("request", indexRequest, beginRequest, lengthRequest);
           return new Request(indexRequest, beginRequest, lengthRequest);
       case 7 :
           let indexPiece = buffer.readInt32BE(offset);
           let beginPiece = buffer.readInt32BE(offset+4);
           let block = buffer.slice(offset+8);
           logger.verbose("Piece : Index = " + indexPiece + " Begin : " + beginPiece + " Length : " + buffer.length-8);
+          self.emit("piece", indexPiece, beginPiece, block);
           return new Piece(indexPiece, beginPiece, block);
      case 8 :
           let indexCancel = buffer.readInt32BE(offset);
           let beginCancel = buffer.readInt32BE(offset+4);
           let lengthCancel = buffer.readInt32BE(offset+8);
           logger.verbose("Cancel : Index = " + indexCancel + " Begin : " + beginCancel + " Length : " + lengthCancel);
+          self.emit("cancel", indexCancel, beginCancel, lengthCancel);
           return new Cancel(indexCancel, beginCancel, lengthCancel);
       default :
           logger.verbose("Message ID ("+messageID+") cannot be parsed");
@@ -235,4 +238,4 @@ let decodePayload = function(chunk){
     logger.verbose(message);
     throw message;
   }
-}
+};

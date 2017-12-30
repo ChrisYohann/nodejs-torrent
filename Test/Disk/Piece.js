@@ -1,7 +1,7 @@
 require('any-promise/register/rsvp');
 const randomAccessFile = require('random-access-file');
-const SeekPointer = require("../../Disk/SeekPointer.js");
-const Piece = require("../../Disk/Piece.js");
+const SeekPointer = require("../../disk/SeekPointer.js");
+const Piece = require("../../disk/Piece.js");
 const Promise = require('any-promise');
 const fsp = require('fs-promise');
 const crypto = require('crypto');
@@ -16,8 +16,8 @@ const assert = chai.assert;
 chai.use(chaiAsPromised);
 
 
-const files = ["./Test/Disk/file1.bin", "./Test/Disk/file2.bin"];
-const outputs = ["./Test/Disk/output1.bin", "./Test/Disk/output2.bin"];
+const files = ["./Test/disk/file1.bin", "./Test/disk/file2.bin"];
+const outputs = ["./Test/disk/output1.bin", "./Test/disk/output2.bin"];
 
 
 /*######## UNIT TESTS ######## */

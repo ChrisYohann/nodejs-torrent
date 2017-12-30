@@ -6,7 +6,6 @@ let logger = require("../log");
 const compact2string = require("compact2string");
 const Tracker = require("./Tracker");
 const util = require('util');
-const Decode = require("../Bencode/Decode");
 const url = require("url");
 
 const DEFAULT_CONNECTION_ID = 0x41727101980;
@@ -60,7 +59,7 @@ UDPTracker.prototype.announce = function(){
       logger.error(error)
     })
   } else {
-    logger.warn("Unable to parse Tracker IP and Address")
+    logger.warn("Unable to parse tracker IP and Address")
   }
 };
 
@@ -111,7 +110,7 @@ UDPTracker.prototype.makeUDPAnnounceRequest = function(torrentEvent){
         logger.error(error)
       })
     } else {
-      logger.warn("Unable to parse Tracker IP and Address")
+      logger.warn("Unable to parse tracker IP and Address")
     }
 };
 
@@ -167,7 +166,7 @@ var callbackTrackerResponseUDP = function(message, remote){
   logger.debug("Message received from : "+remote.address + ':' + remote.port);
   logger.debug(message);
   if(message.length < 4){
-    logger.debug("Tracker Response is less than 4 bytes. Aborting.");
+    logger.debug("tracker Response is less than 4 bytes. Aborting.");
     return ;
   }
 

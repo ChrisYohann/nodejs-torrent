@@ -3,12 +3,12 @@ const MAX_HANDHSAKE_LENGTH = 68;
 const INFO_HASH_LENGTH = 20;
 const PEER_ID_LENGTH = 20;
 const PROTOCOL_LENGTH = 19;
-const PROTOCOL_NAME = "BitTorrent protocol"
+const PROTOCOL_NAME = "BitTorrent protocol";
 const logger = require("../log.js");
 const Promise = require('rsvp').Promise;
 
 let HandshakeParser = module.exports = function HandshakeParser(){
-  this.protocolLength = Buffer([PROTOCOL_LENGTH]);
+  this.protocolLength = PROTOCOL_LENGTH;
   this.protocolName = Buffer.from(PROTOCOL_NAME, "utf8");
   this.reservedBytes = Buffer.alloc(8);
 };
@@ -18,7 +18,7 @@ HandshakeParser.prototype.parse = function(chunk){
   const handshakeLength = chunk.length;
   const ensureHandshakeLength = function(chunk){
     return new Promise(function(resolve, reject){
-      if(handshakeLength != MIN_HANDSHAKE_LENGTH || handshakeLength != MAX_HANDHSAKE_LENGTH){
+      if(handshakeLength == MIN_HANDSHAKE_LENGTH || handshakeLength == MAX_HANDHSAKE_LENGTH){
         resolve(chunk);
       } else {
         const message = `Invalid Handshake length (${chunk.length})`;
@@ -26,26 +26,26 @@ HandshakeParser.prototype.parse = function(chunk){
         reject(message);
       }
     });
-  }
+  };
   const ensureRightProtocol = function(chunk){
     const protocolLength = chunk[0];
     const protocol = chunk.slice(1, self.protocolLength+1);
     return new Promise(function(resolve, reject){
-      if(protocolLength == self.protocolLength && protocol == self.protocolName){
+      if(protocolLength == self.protocolLength && protocol.equals(self.protocolName)){
         resolve(chunk);
       } else {
-        let message = `Invalid Protocol Length (${protocolLength}) and Protocol Name ${protocol}`;
+        let message = `Invalid Protocol Length (${protocolLength}) and Protocol Name ${protocol.toString("utf8")}`;
         logger.warn("Handshake Parser :"+message);
         reject(message);
       }
     });
-  }
+  };
   const getInfoHash = function(chunk){
     const infoHash = chunk.slice(28, 28+INFO_HASH_LENGTH);
     return new Promise(function(){
       Promise.resolve(chunk, infoHash);
     });
-  }
+  };
   const getPeerId = function(chunk, infoHash){
     return new Promise(function(resolve, reject){
       if (handshakeLength == MIN_HANDSHAKE_LENGTH){
@@ -55,9 +55,9 @@ HandshakeParser.prototype.parse = function(chunk){
         resolve({"infoHash" : infoHash, "peerId" : peerId});
       }
     });
-  }
+  };
 
-  return ensureHandshakeLength
+  return ensureHandshakeLength(chunk)
   .then(ensureRightProtocol)
   .then(getInfoHash)
   .then(getPeerId)
@@ -70,4 +70,4 @@ HandshakeParser.prototype.parse = function(chunk){
 HandshakeParser.prototype.create = function(infoHash, peerId){
   let self = this;
   return Buffer.concat([protocolLength, protocolName, reservedBytes, infoHash, peerId], MAX_HANDHSAKE_LENGTH);
-}
+};

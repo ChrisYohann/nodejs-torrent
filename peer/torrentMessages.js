@@ -10,7 +10,7 @@ const TorrentMessage = module.exports = function TorrentMessage() {
     this.payload = null
 };
 
-TorrentMessage.prototype.send = function(){
+TorrentMessage.prototype.build = function(){
     let buffer = Buffer.alloc(5);
     buffer.writeInt32BE(this.lengthPrefix, 0);
   if(this.messageID != null)

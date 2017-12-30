@@ -3,8 +3,8 @@
 let logger = require("./log");
 let net = require("net");
 let UI = require("./UI/ui");
-let TorrentManager = require("./Peer/TorrentManager");
-let HandshakeParser = require("./Peer/handshake");
+let TorrentManager = require("./peer/torrentManager");
+let HandshakeParser = require("./peer/handshake");
 const _ = require("underscore");
 
 const handshakeParser = new HandshakeParser();
@@ -26,7 +26,7 @@ function getPort(callback){
 
     let server = this.server;
 
-    server.listen(app_port, function(){
+    server.listen(port, function(){
       logger.info(`Server listening at ${port}`);
       callback(port);
     });
@@ -53,15 +53,14 @@ let connectionListener = function(socket){
           const torrent = torrentsWithSameInfoHash[0];
           logger.verbose(`Peer ${socket.remoteAddress} is connecting for Torrent : ${torrent["torrent"]["name"]}`);
           const handshakeResponse = handshakeParser.create(torrent["infoHash"], self.peerId);
-          /*const peer = (function(){
+          const peer = (function(){
             if("peerId" in parsedHandshake){
-              return new Peer(socket, parsedHandshake["peerId"]);
+              return new Peer(torrent, socket, parsedHandshake["peerId"]);
             } else {
-              return new Peer(socket, null);
+              return new Peer(torrent, socket, null);
             }
           })();
-          peer.socket.on("data", torrentRolePlayer);
-          socket.write(handshakeResponse);*/
+          socket.write(handshakeResponse);
       }
     }).catch(function(failure){
       logger.error("Error in Parsing Handshake. Aborting Connection");
@@ -75,7 +74,7 @@ let App = function App(){
     this.ui = undefined;
     this.torrentManager = undefined;
     this.torrents = [];
-    this.server = net.createServer();
+    this.server = net.createServer(connectionListener.bind(this));
 };
 
 util.inherits(App, EventEmitter);

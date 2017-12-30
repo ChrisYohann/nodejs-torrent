@@ -3,7 +3,6 @@ const Utils = require("../Utils");
 const EventEmitter = require('events').EventEmitter;
 
 const util = require('util');
-const Decode = require("../Bencode/Decode");
 
 const Tracker = module.exports = function Tracker(clientTorrent, announceURL) {
     EventEmitter.call(this);

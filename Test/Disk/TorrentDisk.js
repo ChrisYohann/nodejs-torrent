@@ -1,7 +1,7 @@
 require('any-promise/register/rsvp');
 const randomAccessFile = require('random-access-file');
-const SeekPointer = require("../../Disk/SeekPointer.js");
-const Piece = require("../../Disk/Piece.js");
+const SeekPointer = require("../../disk/SeekPointer.js");
+const Piece = require("../../disk/Piece.js");
 const Promise = require('any-promise');
 const fsp = require('fs-promise');
 const crypto = require('crypto');
@@ -10,7 +10,7 @@ const fs = require("fs");
 const os = require('os');
 const Decoder = require("../../Bencode/Decoder");
 const bencodeDecoder = new Decoder("utf8");
-const TorrentDisk = require("../../Disk/TorrentDisk");
+const TorrentDisk = require("../../disk/TorrentDisk");
 const path = require("path");
 
 //Test Modules
@@ -23,12 +23,12 @@ chai.use(chaiAsPromised);
 
 
 
-const testSingleFile = "./Test/Disk/TestFiles/testSingleFile";
-const testMultipleFiles = "./Test/Disk/TestFiles/TestMultipleFiles";
+const testSingleFile = "./Test/disk/TestFiles/testSingleFile";
+const testMultipleFiles = "./Test/disk/TestFiles/TestMultipleFiles";
 
 
 describe("### TORRENT DISK TESTS ###", function(){
-  describe("*** Init Torrent Disk***", function(){
+  describe("*** Init Torrent disk***", function(){
       const parsedTorrentSingleFile = bencodeDecoder.decode(testSingleFile + ".torrent");
       const parsedTorrentMultipleFiles = bencodeDecoder.decode(testMultipleFiles + ".torrent");
       console.log(parsedTorrentSingleFile.toString());
