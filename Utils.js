@@ -58,16 +58,17 @@ exports.decimalToHexString = function(number){
 };
 
 exports.bitfieldContainsPiece = function(bitfield, pieceIndex){
-    let mask = 1 << (index/8 + 1) * 8 - index - 1;
-    let i = index/8;
-    if((bitfield[i] & mask) == 0)
+    let group = ~~(pieceIndex/8);
+    let shift = 8 - pieceIndex%8 - 1 ;
+    let mask = 1<<shift;
+    if((bitfield[group] & mask) == 0)
         return false;
     return true;
 };
 
 exports.updateBitfield = function(bitfield, pieceIndex){
-    let value = 1 << (index/8 + 1) * 8 - index - 1;
-    let i = index/8;
-    bitfield[i] |= value;
+    let group = ~~(pieceIndex/8);
+    let shift = 8 - pieceIndex%8 - 1 ;
+    bitfield[group] |= 1<<shift;
     return bitfield;
 };

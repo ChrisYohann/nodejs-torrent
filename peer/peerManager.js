@@ -5,9 +5,11 @@ let PeerManager = module.exports = function PeerManager(torrent){
     let self = this;
     this.torrent = torrent;
     this.activePeers = torrent.activePeers;
-    this.nbPieces = torrent._torrentDisk.nbPieces;
+    this.nbPieces = torrent.disk.nbPieces;
     this.piecesWithCount = null;
-    this.nonRequestedPieces = null;
+    this.nonRequestedPieces = _.filter(_.range(self.nbPieces), function(index){
+        return !torrent.containsPiece(index);
+    });
 };
 
 PeerManager.prototype.updateNonRequestedPieces = function(){
@@ -26,8 +28,8 @@ PeerManager.prototype.gatherAllBitfields = function(){
     const countByPieceIndex = _.countBy(_.flatten(piecesCompletedByEachPeer), function(pieceIndex){
         return pieceIndex;
     });
-    const result = _.map(countByPieceIndex, function(value, key){ return {pieceIndex: key, count: value};});
-    self.rarestPieces = result;
+    const result = _.map(countByPieceIndex, function(value, key){ return {pieceIndex: parseInt(key), count: value};});
+    self.piecesWithCount = result;
 };
 
 PeerManager.prototype.askPeersForPieces = function(){
@@ -50,7 +52,7 @@ PeerManager.prototype.preparePiecesRequests = function(){
     };
     const computeRemainingActivePeers = () => {return _.filter(self.activePeers, (peer) => {return peer.nbPiecesCurrentlyDownloading < MAX_NB_PIECES_BY_PEER});};
     let piecesToRequest = _.filter(self.piecesWithCount, (value) => {return self.nonRequestedPieces.includes(value.pieceIndex);});
-    let minOccurency = _.min(piecesToRequest, (value) => {return value.count;});
+    let minOccurency = _.min(piecesToRequest, (value) => {return value.count;}).count;
     let rarestPieces = getRarestPieces(piecesToRequest, minOccurency);
     let remainingActivePeers = computeRemainingActivePeers();
 
@@ -74,16 +76,17 @@ PeerManager.prototype.preparePiecesRequests = function(){
 };
 
 PeerManager.prototype.choosePeerToRequestPiece = function(pieceIndex, peers){
+    let self = this;
     if (peers.length == 0) return null;
 
-    const shuffled_peers = _.shuffled(peers);
-    const peer = shuffled_peers[0];
+    const shuffled_peers = _.shuffle(peers);
+    const peer = shuffled_peers.shift();
     const ensurePeerContainsPiece = (peer) => {return peer.containsPiece(pieceIndex);};
     const ensurePeerIsNotChokingUS = (peer) => {return peer.peer_choking;};
     const result = _.every([ensurePeerContainsPiece, ensurePeerIsNotChokingUS], (func) => {return func(peer)});
     if(result){
         return peer;
     } else {
-        return choosePeerToRequestPiece(pieceIndex, shuffled_peers.shift());
+        return self.choosePeerToRequestPiece(pieceIndex, shuffled_peers);
     }
 };

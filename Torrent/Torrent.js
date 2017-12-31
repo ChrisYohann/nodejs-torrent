@@ -29,17 +29,17 @@ let Torrent = module.exports = function Torrent(metaFile, filepath) {
     this._metaData = metaData;
     this._mainTracker = metaData["announce"];
     this.trackerList = ("announce-list" in metaData & metaData["announce-list"].length > 0) ? metaData["announce-list"] : undefined;
-    this.infoHash = undefined;
+    this.infoHash = null;
 
     //File fields
-    this._torrentDisk = new TorrentDisk(metaData, filepath);
-    this.bitfield = undefined;
+    this.disk = new TorrentDisk(metaData, filepath);
+    this.bitfield = null;
 
     // Events
-    this._uploaded = this["_torrentDisk"]["uploaded"];
-    this._downloaded = this["_torrentDisk"]["downloaded"];
-    this._completed = this["_torrentDisk"]["completed"];
-    this._size = this["_torrentDisk"]["totalSize"];
+    this._uploaded = this["disk"]["uploaded"];
+    this._downloaded = this["disk"]["downloaded"];
+    this._completed = this["disk"]["completed"];
+    this._size = this["disk"]["totalSize"];
     this._left = this["_size"] - this["_completed"];
 
     //peer Fields
@@ -57,11 +57,11 @@ let Torrent = module.exports = function Torrent(metaFile, filepath) {
         }
     })();
 
-    this._torrentDisk.verify().then(function(completed){
+    this.disk.verify().then(function(completed){
       logger.info(`${self.name} torrent verified. ${completed} bytes downloaded.`);
       self._completed = completed;
       self._left = self._size - self._completed;
-      return self._torrentDisk.getBitfieldFromFile().then(function(bitfield){
+      return self.disk.getBitfieldFromFile().then(function(bitfield){
         self.bitfield = bitfield;
         self.emit('verified', completed);
       });
@@ -140,11 +140,11 @@ Torrent.prototype.updateBitfield = function(index){
 };
 
 Torrent.prototype.read = function(index, begin, length){
-    return this._torrentDisk.read(index, begin, length);
+    return this.disk.read(index, begin, length);
 };
 
 Torrent.prototype.write = function(index, begin, block){
-    return this._torrentDisk.write(index, begin, block);
+    return this.disk.write(index, begin, block);
 };
 
 let getHTTPorUDPTracker = function(trackerURL){
