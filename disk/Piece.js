@@ -60,7 +60,7 @@ Piece.prototype.write = function(begin, block){
                                   }
                               })
                           }
-                          resolve(bytesWritten)
+                          resolve(bytesWritten);
                       }
                   })
           })();

@@ -67,9 +67,9 @@ PeerManager.prototype.preparePiecesRequests = function(){
         }
         remainingActivePeers = computeRemainingActivePeers();
         if (rarestPieces.length == 0){
-            const nextMinOccurency_tmp = _.filter(rarestPieces, (value) => {return value.count > minOccurency});
-            minOccurency = _.min(nextMinOccurency_tmp, (value) => {return value.count;});
-            rarestPieces = getRarestPieces(rarestPieces, minOccurency);
+            const nextMinOccurency_tmp = _.filter(piecesToRequest, (value) => {return value.count > minOccurency});
+            minOccurency = _.min(nextMinOccurency_tmp, (value) => {return value.count;}).count;
+            rarestPieces = getRarestPieces(piecesToRequest, minOccurency);
         }
     }
     return result;
