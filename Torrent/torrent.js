@@ -34,6 +34,9 @@ let Torrent = module.exports = function Torrent(metaFile, filepath) {
     //File fields
     this.disk = new TorrentDisk(metaData, filepath);
     this.bitfield = null;
+    this.nbPieces = this.disk.nbPieces;
+    this.pieceLength = metaData["info"]["piece length"];
+    this.lastPieceLength = this.disk.lastPieceLength;
 
     // Events
     this._uploaded = this["disk"]["uploaded"];

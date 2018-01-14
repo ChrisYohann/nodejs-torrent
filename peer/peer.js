@@ -14,6 +14,7 @@ const Request = Messages.Request;
 const Piece = Messages.Piece;
 const Cancel = Messages.Cancel;
 const KeepAlive = Messages.KeepAlive;
+const _ = require("underscore");
 
 
 let Peer = module.exports = function Peer(torrent, socket, peerId){
@@ -98,7 +99,30 @@ Peer.prototype.addMessageToQueue = function(message){
     }
 };
 
-Peer.prototype.requestPiece = function(pieceIndex){};
+Peer.prototype.requestPiece = function(pieceIndex){
+  let self = this;
+  const requestMessages = self.createRequestMessages(pieceIndex);
+  requestMessages.forEach((request) => {
+      self.addMessageToQueue(request);
+  });
+};
+
+Peer.prototype.createRequestMessages = function(pieceIndex, blockLength){
+    let self = this;
+    blockLength = (typeof blockLength === "undefined") ? 1<<14 : blockLength;
+    const isLastPiece = pieceIndex == self.torrent.nbPieces-1;
+    const blockRequests = ((isLastPiece) => {
+        if(isLastPiece)
+            return createBlockRequests(self.torrent.lastPieceLength, Math.min(blockLength, self.torrent.lastPieceLength));
+        else
+            return createBlockRequests(self.torrent.pieceLength, Math.min(blockLength, self.torrent.pieceLength));
+    })(isLastPiece);
+    const requests = _.map(blockRequests, (block) => {
+        return new Request(pieceIndex, block.begin, block.length);
+    });
+    return requests;
+
+};
 
 Peer.prototype.containsPiece = function(index){
     let self = this;
@@ -169,3 +193,15 @@ let receiveCancel = function(index, begin, length){
     let self = this;
     //self.torrent.cancel(index, begin, length)
 };
+
+let createBlockRequests = function(pieceLength, blockLength){
+    const beginValues = _.range(0, pieceLength, blockLength);
+    const blockValues = _.map(beginValues, (blockBegin, index) => {
+        if (index == beginValues.length - 1)
+            return {begin: blockBegin, length: pieceLength - blockBegin};
+        else
+            return {begin: blockBegin, length: blockLength};
+    });
+    return blockValues;
+};
+
