@@ -1,4 +1,4 @@
-const TorrentDisk = require("../disk/TorrentDisk");
+const TorrentDisk = require("../disk/torrentDisk");
 const Decoder = require("../Bencode/Decoder");
 const Encode = require("../Bencode/Encode");
 const logger = require("../log");

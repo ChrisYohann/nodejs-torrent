@@ -1,7 +1,7 @@
 require('any-promise/register/rsvp');
 const randomAccessFile = require('random-access-file');
-const SeekPointer = require("../../disk/SeekPointer.js");
-const Piece = require("../../disk/Piece.js");
+const SeekPointer = require("../../disk/seekPointer.js");
+const Piece = require("../../disk/piece.js");
 const Promise = require('any-promise');
 const fsp = require('fs-promise');
 const crypto = require('crypto');
