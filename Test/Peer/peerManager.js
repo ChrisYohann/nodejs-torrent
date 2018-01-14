@@ -1,4 +1,4 @@
-const Torrent = require("../../Torrent/Torrent");
+const Torrent = require("../../Torrent/torrent");
 const Peer = require("../../peer/peer");
 const PeerManager = require("../../peer/peerManager");
 const net = require("net");
@@ -59,10 +59,13 @@ describe("### TEST PEER MANAGER ###", function(){
             const pieceRequests2 = peerManager.preparePiecesRequests();
             pieceRequests.forEach(function(element){
                 console.log(`Peer : ${element.peer.peerId}; Piece Index : ${element.pieceIndex}`);
-            })
+            });
             pieceRequests2.forEach(function(element){
                 console.log(`Peer : ${element.peer.peerId}; Piece Index : ${element.pieceIndex}`);
-            })
+            });
+            expect(peer1.nbPiecesCurrentlyDownloading).to.equal(3);
+            expect(peer2.nbPiecesCurrentlyDownloading).to.equal(3);
+            expect(peer3.nbPiecesCurrentlyDownloading).to.equal(3);
         });
     });
 });

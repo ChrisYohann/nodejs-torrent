@@ -37,7 +37,7 @@ PeerManager.prototype.askPeersForPieces = function(){
   const requests = self.preparePiecesRequests();
   requests.forEach(function(request){
       const peer = request["peer"];
-      const pieceIndex = ["pieceIndex"];
+      const pieceIndex = request["pieceIndex"];
       peer.requestpiece(pieceIndex);
   });
 };

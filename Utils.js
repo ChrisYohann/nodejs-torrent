@@ -61,7 +61,7 @@ exports.bitfieldContainsPiece = function(bitfield, pieceIndex){
     let group = ~~(pieceIndex/8);
     let shift = 8 - pieceIndex%8 - 1 ;
     let mask = 1<<shift;
-    return (bitfield[group] & mask) == 0;
+    return (bitfield[group] & mask) != 0;
 };
 
 exports.updateBitfield = function(bitfield, pieceIndex){

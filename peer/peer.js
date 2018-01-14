@@ -107,7 +107,6 @@ Peer.prototype.containsPiece = function(index){
     } else {
         return false;
     }
-
 };
 
 let receiveKeepAlive = function(){
@@ -157,7 +156,12 @@ let receiveRequest = function(index, begin, length){
 let receivePiece = function(index, begin, block){
     let self = this;
     if(self.torrent.containsPiece(index)){
-        self.torrent.write(index, begin, block);
+        self.torrent.write(index, begin, block).then(function(isCompleted){
+            if (isCompleted){
+                self.nbPiecesCurrentlyDownloading -= 1 ;
+                self.emit("have", index);
+            }
+        });
     }
 };
 

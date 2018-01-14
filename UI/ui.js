@@ -9,7 +9,7 @@ const EventEmitter = require("events");
 let logger = require("../log");
 let inquirer = require('inquirer') ;
 let CreateTorrent = require('../newTorrent');
-let Torrent = require('../Torrent/Torrent');
+let Torrent = require('../Torrent/torrent');
 let TorrentLine = require('./torrentLine');
 
 const NB_COLUMNS = process.stdout.columns || 80 ;

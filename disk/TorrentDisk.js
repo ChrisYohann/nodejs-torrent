@@ -163,7 +163,7 @@ TorrentDisk.prototype.write = function(index, begin, block){
     return piece.write(begin, block).then(function(bytesWritten){
       self.downloaded += bytesWritten;
       self.completed += bytesWritten;
-      return bytesWritten
+      return piece.checkSha1();
     })
   }
 };

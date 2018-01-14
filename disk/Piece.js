@@ -53,13 +53,6 @@ Piece.prototype.write = function(begin, block){
                       } else {
                           piece.insertBlock(begin, block.length);
                           piece.mergeBlocks();
-                          if (piece.isCompleted()) {
-                              piece.checkSha1().then(function (isCompleted) {
-                                  if (!isCompleted) {
-                                      piece.blocks = []
-                                  }
-                              })
-                          }
                           resolve(bytesWritten);
                       }
                   })
